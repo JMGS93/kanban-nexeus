@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import logo from "../assets/nexeus.png";
 
 export default function Register({ onRegister }) {
   const [email, setEmail] = useState("");
@@ -29,13 +30,16 @@ export default function Register({ onRegister }) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
+    <div className="max-w-md mx-auto p-6 bg-white rounded shadow flex flex-col items-center">
+      {/* Logo arriba */}
+      <img src={logo} alt="Logo DataFlow Manager" className="w-50 h-50 mb-4" />
+
       <h2 className="text-2xl font-bold mb-4">Registrar usuario</h2>
 
       {message && <p className="text-green-500 mb-2">{message}</p>}
       {error && <p className="text-red-500 mb-2">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full">
         <input
           type="email"
           placeholder="Email"
@@ -54,11 +58,12 @@ export default function Register({ onRegister }) {
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white p-2 rounded flex items-center justify-center"
+          style={{ backgroundColor: "#ec729c" }}
+          className="text-white p-2 rounded flex items-center justify-center"
           disabled={loading}
         >
           {loading && <span className="button-spinner"></span>}
-          <span className="ml-2">{loading ? "Registrando..." : "Registrarse"}</span>
+          <span className="ml-2">{loading ? "Registrando..." : "Regístrate"}</span>
         </button>
       </form>
     </div>
