@@ -6,14 +6,36 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       onLogin(userCredential.user);
     } catch (err) {
-      setError(err.message);
+      // Mapeamos los errores de Firebase a mensajes amigables
+      switch (err.code) {
+        case "auth/user-not-found":
+          setError("No existe una cuenta con este correo.");
+          break;
+        case "auth/wrong-password":
+          setError("Contraseña incorrecta. Intenta de nuevo.");
+          break;
+        case "auth/invalid-email":
+          setError("Correo electrónico inválido.");
+          break;
+        case "auth/invalid-credential":
+          setError("Las credenciales ingresadas no son válidas. Verifica tu correo y contraseña.");
+          break;
+        default:
+          setError("Error al iniciar sesión: " + err.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,8 +60,13 @@ export default function Login({ onLogin }) {
           required
         />
         {error && <p className="text-red-500">{error}</p>}
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Entrar
+        <button
+          type="submit"
+          className="bg-blue-500 text-white p-2 rounded flex justify-center items-center gap-2"
+          disabled={loading}
+        >
+          {loading && <span className="loader"></span>}
+          <span>{loading ? "Cargando..." : "Entrar"}</span>
         </button>
       </form>
     </div>

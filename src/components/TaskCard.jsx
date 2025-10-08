@@ -1,19 +1,23 @@
+// src/components/TaskCard.jsx
 import React from "react";
-import { Draggable } from "react-beautiful-dnd";
 
-export default function TaskCard({ task, index }) {
+export default function TaskCard({ task, index, provided, onDelete }) {
+  // task: { id, content, ... }
   return (
-    <Draggable draggableId={task.id} index={index}>
-      {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className="bg-white p-3 rounded shadow cursor-pointer"
-        >
-          {task.content}
-        </div>
-      )}
-    </Draggable>
+    <div
+      ref={provided.innerRef}
+      {...provided.draggableProps}
+      {...provided.dragHandleProps}
+      className="p-3 mb-2 bg-white rounded shadow cursor-move flex justify-between items-center"
+    >
+      <div className="text-sm">{task.content}</div>
+      <button
+        onClick={() => onDelete(task.id)}
+        className="ml-4 text-red-500 hover:text-red-700"
+        title="Eliminar tarea"
+      >
+        ✕
+      </button>
+    </div>
   );
 }
