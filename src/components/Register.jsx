@@ -19,7 +19,7 @@ export default function Register({ onRegister }) {
         email,
         password
       );
-      setMessage("Registro exitoso! Bienvenido/a.");
+      setMessage("¡Registro exitoso! Bienvenido a DataFlow Manager.");
       onRegister(userCredential.user); // accede directamente
     } catch (err) {
       setError(err.message);

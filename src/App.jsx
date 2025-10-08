@@ -10,7 +10,7 @@ function Message({ text, onClose, children }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded shadow-md max-w-sm text-center">
-        <p className="mb-4">{text}</p>
+        {text && <p className="mb-4 whitespace-pre-line">{text}</p>} 
         {children}
         {!children && (
           <button
@@ -67,7 +67,7 @@ function App() {
   };
 
   const handleRegister = (u) => {
-    setMessage("¡Registro exitoso! Bienvenido a Kanban Nexeus");
+    setMessage("¡Registro exitoso!\nBienvenido a DataFlow Manager");
     setUser(u);
   };
 
