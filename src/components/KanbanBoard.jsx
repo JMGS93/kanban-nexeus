@@ -4,6 +4,12 @@ import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { getAllTasks, saveTask, updateTask, removeTask } from "../firestoreTasks";
 import TaskCard from "../components/TaskCard";
 
+
+const parseDate = (d) => {
+  const [year, month, day] = d.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 function Message({ text, onClose, children }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -159,25 +165,20 @@ export default function KanbanBoard() {
   };
 
   // 🔹 Añadir horas a una tarea (fechas corregidas)
-  const addHoursToTask = () => {
+  const addHoursToTask = async () => {
     const { columnId, taskId, date, hours, minutes, note } = hoursModal;
+
     if (!date || !hours) return;
 
     const task = columns[columnId].items.find((item) => item.id === taskId);
+    if (!task) return;
 
-    // Convertir fecha de la tarea (creationDate) a objeto Date
-    const [tYear, tMonth, tDay] = task.creationDate.split("-").map(Number);
-    const creationDate = new Date(tYear, tMonth - 1, tDay);
-
-    // Convertir fecha seleccionada a objeto Date
-    const [sYear, sMonth, sDay] = date.split("-").map(Number);
-    const selectedDate = new Date(sYear, sMonth - 1, sDay);
-
-    // Fecha de hoy (sin horas)
+    const creation = parseDate(task.creationDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const selected = parseDate(date);
 
-    if (selectedDate < creationDate) {
+    if (selected < creation) {
       const previousHoursModal = { ...hoursModal };
       setHoursModal(null);
       setWarningModal({
@@ -190,7 +191,7 @@ export default function KanbanBoard() {
       return;
     }
 
-    if (selectedDate > today) {
+    if (selected > today) {
       const previousHoursModal = { ...hoursModal };
       setHoursModal(null);
       setWarningModal({
@@ -203,23 +204,33 @@ export default function KanbanBoard() {
       return;
     }
 
-    // Añadir horas a la tarea
+    // 🔹 Actualizar estado local
+    const updatedTask = {
+      ...task,
+      timesheet: [
+        ...task.timesheet,
+        { date, hours: Number(hours), minutes: Number(minutes), note },
+      ],
+    };
+
     setColumns((prev) => {
       const col = prev[columnId];
-      const newItems = col.items.map((item) => {
-        if (item.id === taskId) {
-          return {
-            ...item,
-            timesheet: [
-              ...item.timesheet,
-              { date, hours: Number(hours), minutes: Number(minutes), note },
-            ],
-          };
-        }
-        return item;
-      });
+      const newItems = col.items.map((item) =>
+        item.id === taskId ? updatedTask : item
+      );
       return { ...prev, [columnId]: { ...col, items: newItems } };
     });
+
+    // 🔹 Guardar en Firestore
+    try {
+      await updateTask(taskId, { timesheet: updatedTask.timesheet });
+    } catch (err) {
+      console.error("Error guardando horas en Firestore:", err);
+      setWarningModal({
+        text: `Error guardando horas: ${err.message || err}`,
+        onClose: () => setWarningModal(null),
+      });
+    }
 
     setHoursModal(null);
   };
