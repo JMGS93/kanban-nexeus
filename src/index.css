@@ -1,30 +1,45 @@
+/* =========================================================
+   Tailwind CSS base, componentes y utilidades
+   ========================================================= */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   Spinner para indicar carga
+   ========================================================= */
+
+/* Spinner genérico */
 .loader {
-  border: 2px solid transparent;
-  border-top-color: white;
-  border-radius: 50%;
-  width: 16px;
+  border: 2px solid transparent;        /* Borde invisible excepto top */
+  border-top-color: white;              /* Color del borde superior visible */
+  border-radius: 50%;                   /* Forma circular */
+  width: 16px;                          /* Tamaño */
   height: 16px;
-  animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;   /* Rotación continua */
 }
 
+/* Animación de rotación */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }     /* Rotación completa */
 }
-/* Spinner dentro del botón */
+
+/* =========================================================
+   Spinner específico para botones (loader dentro del botón)
+   ========================================================= */
 .button-spinner {
-  border: 3px solid rgba(255, 255, 255, 0.3); /* borde transparente */
-  border-top-color: #ffffff; /* color del spinner */
-  border-radius: 50%;
-  width: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3); /* Borde semi-transparente */
+  border-top-color: #ffffff;                   /* Color del spinner */
+  border-radius: 50%;                          /* Forma circular */
+  width: 18px;                                 /* Tamaño */
   height: 18px;
-  animation: spin 0.8s linear infinite;
-  margin-right: 8px;
+  animation: spin 0.8s linear infinite;       /* Rotación más rápida que el genérico */
+  margin-right: 8px;                           /* Separación respecto al texto del botón */
 }
-/* Cambiar el cursor sobre el icono del calendario */
+
+/* =========================================================
+   Personalización del cursor en inputs tipo fecha
+   ========================================================= */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
+  cursor: pointer;  /* Cambia el cursor al pasar sobre el icono del calendario */
 }

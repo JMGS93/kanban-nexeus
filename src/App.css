@@ -1,42 +1,65 @@
+/* --------------------------------------------------------------------------
+ 📄 Archivo: index.css / App.css
+ 🧩 Descripción:
+    Estilos base globales del proyecto Kanban Nexeus.
+    Define reglas generales para la disposición del contenido, animaciones,
+    y efectos sobre el logo y las tarjetas.
+
+ 💡 Nota:
+    Estos estilos afectan la estructura principal de la app (root) y algunos
+    elementos visuales globales. No interfieren con TailwindCSS, sino que
+    complementan su uso para detalles visuales específicos.
+--------------------------------------------------------------------------- */
+
+/* 🎯 Contenedor principal de la aplicación */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 1280px;      /* Ancho máximo para contenido centrado */
+  margin: 0 auto;         /* Centra horizontalmente el contenido */
+  padding: 2rem;          /* Espaciado interno general */
+  text-align: center;     /* Centra el texto dentro de los elementos */
 }
 
+/* 🌀 Estilos del logo principal */
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  height: 6em;                    /* Tamaño fijo */
+  padding: 1.5em;                 /* Espaciado alrededor */
+  will-change: filter;            /* Optimización de renderizado (animación del filtro) */
+  transition: filter 300ms;       /* Transición suave al aplicar efectos */
 }
 
+/* ✨ Efecto hover sobre el logo genérico */
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa); /* Brillo azulado al pasar el ratón */
+}
+
+/* 💙 Efecto hover específico para el logo de React */
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa); /* Brillo celeste */
+}
+
+/* 🔄 Animación de rotación continua del logo */
 @keyframes logo-spin {
   from {
-    transform: rotate(0deg);
+    transform: rotate(0deg);   /* Inicio sin rotación */
   }
   to {
-    transform: rotate(360deg);
+    transform: rotate(360deg); /* Gira completamente */
   }
 }
 
+/* ♻️ Reglas para activar animación si el usuario no prefiere reducir movimiento */
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+    animation: logo-spin infinite 20s linear; /* Rotación infinita en 20s */
   }
 }
 
+/* 🧱 Clase utilitaria para tarjetas o secciones básicas */
 .card {
-  padding: 2em;
+  padding: 2em; /* Espaciado uniforme dentro de las tarjetas */
 }
 
+/* 📘 Clase para texto informativo o secundario */
 .read-the-docs {
-  color: #888;
+  color: #888; /* Gris claro para texto de documentación */
 }
