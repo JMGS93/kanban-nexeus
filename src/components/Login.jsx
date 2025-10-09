@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import logo from "../assets/nexeus.png"; // importamos el logo
+import logo from "../assets/nexeus.png";
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin = () => {} }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,9 +15,15 @@ export default function Login({ onLogin }) {
     setError("");
 
     try {
+      if (!email || !password) {
+        setError("Email y contraseña son obligatorios.");
+        return;
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       onLogin(userCredential.user);
     } catch (err) {
+      console.error("Login error:", err);
       switch (err.code) {
         case "auth/user-not-found":
           setError("No existe una cuenta con este correo.");
@@ -32,7 +38,7 @@ export default function Login({ onLogin }) {
           setError("Las credenciales ingresadas no son válidas. Verifica tu correo y contraseña.");
           break;
         default:
-          setError("Error al iniciar sesión: " + err.message);
+          setError("Error al iniciar sesión: " + (err.message || err));
       }
     } finally {
       setLoading(false);
@@ -41,9 +47,7 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded shadow flex flex-col items-center">
-      {/* Logo arriba */}
       <img src={logo} alt="Logo DataFlow Manager" className="w-50 h-50 mb-4" />
-
       <h2 className="text-2xl font-bold mb-4">Iniciar sesión</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full">
@@ -70,8 +74,8 @@ export default function Login({ onLogin }) {
           className="text-white p-2 rounded flex items-center justify-center"
           disabled={loading}
         >
-          {loading && <span className="button-spinner"></span>}
-          <span className="ml-2">{loading ? "Registrando..." : "Iniciar Sesión"}</span>
+          {loading && <span className="button-spinner" />}
+          <span className="ml-2">{loading ? "Iniciando..." : "Iniciar Sesión"}</span>
         </button>
       </form>
     </div>

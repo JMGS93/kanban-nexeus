@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+// src/screens/KanbanBoard.jsx
+import React, { useState, useEffect } from "react";
+import { DragDropContext, Droppable } from "@hello-pangea/dnd";
+import { getAllTasks, saveTask, updateTask, removeTask } from "../firestoreTasks";
+import TaskCard from "../components/TaskCard";
 
-// Componente Message para confirmaciones y modales
 function Message({ text, onClose, children }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -21,31 +23,12 @@ function Message({ text, onClose, children }) {
   );
 }
 
-// Datos iniciales
-const initialData = {
-  todo: {
-    name: "Por hacer",
-    items: [
-      { id: "1", content: "Diseñar pantalla de login", responsible: "Juan", creationDate: "2025-10-05", dueDate: "2025-10-10", timesheet: [] },
-      { id: "2", content: "Configurar base de datos", responsible: "Ana", creationDate: "2025-10-06", dueDate: "2025-10-12", timesheet: [] },
-    ],
-  },
-  inProgress: {
-    name: "En progreso",
-    items: [
-      { id: "3", content: "Crear sistema de registro", responsible: "Pedro", creationDate: "2025-10-07", dueDate: "2025-10-11", timesheet: [] }
-    ],
-  },
-  done: {
-    name: "Completado",
-    items: [
-      { id: "4", content: "Instalar dependencias", responsible: "Laura", creationDate: "2025-10-04", dueDate: "2025-10-09", timesheet: [] }
-    ],
-  },
-};
-
 export default function KanbanBoard() {
-  const [columns, setColumns] = useState(initialData);
+  const [columns, setColumns] = useState({
+    todo: { name: "Por hacer", items: [] },
+    inProgress: { name: "En progreso", items: [] },
+    done: { name: "Completado", items: [] },
+  });
   const [newTask, setNewTask] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
   const [newCreationDate, setNewCreationDate] = useState("");
@@ -56,8 +39,39 @@ export default function KanbanBoard() {
   const [hoursModal, setHoursModal] = useState(null);
   const [warningModal, setWarningModal] = useState(null);
 
-  // Drag & Drop
-  const onDragEnd = (result) => {
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const tasks = await getAllTasks();
+        console.log("Tasks from Firestore:", tasks);
+        const newCols = {
+          todo: { name: "Por hacer", items: [] },
+          inProgress: { name: "En progreso", items: [] },
+          done: { name: "Completado", items: [] },
+        };
+        tasks?.forEach((t) => {
+          const colKey = t.status || "todo";
+          if (newCols[colKey]) {
+            newCols[colKey].items.push({
+              ...t,
+              timesheet: t.timesheet || [],
+              id: String(t.id),
+            });
+          }
+        });
+        setColumns(newCols);
+      } catch (err) {
+        console.error("Error cargando tareas:", err);
+        setWarningModal({
+          text: "No se pudieron cargar las tareas. Comprueba tu conexión o permisos.",
+          onClose: () => setWarningModal(null),
+        });
+      }
+    }
+    fetchData();
+  }, []);
+
+  const onDragEnd = async (result) => {
     if (!result.destination) return;
     const { source, destination } = result;
 
@@ -79,6 +93,9 @@ export default function KanbanBoard() {
       const [movedItem] = sourceItems.splice(source.index, 1);
       destItems.splice(destination.index, 0, movedItem);
 
+      movedItem.status = destination.droppableId;
+      await updateTask(movedItem.id, { status: movedItem.status });
+
       setColumns({
         ...columns,
         [source.droppableId]: { ...sourceColumn, items: sourceItems },
@@ -87,74 +104,80 @@ export default function KanbanBoard() {
     }
   };
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!newTask.trim()) return;
 
-    // Validar que la fecha de creación no sea futura
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Validar fecha
+    if (!newCreationDate || isNaN(new Date(newCreationDate).getTime())) {
+      setWarningModal({ text: "Fecha de creación inválida.", onClose: () => setWarningModal(null) });
+      return;
+    }
 
     const creationDateObj = new Date(newCreationDate);
     creationDateObj.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     if (creationDateObj > today) {
       setWarningModal({
         text: "La fecha de creación no puede ser futura.",
-        onClose: () => setWarningModal(null)
+        onClose: () => setWarningModal(null),
       });
       return;
     }
 
     const newItem = {
-      id: Date.now().toString(),
       content: newTask,
       responsible: newResponsible,
       creationDate: newCreationDate,
       dueDate: newDeadline,
       timesheet: [],
+      status: targetColumn,
     };
 
-    setColumns((prev) => ({
-      ...prev,
-      [targetColumn]: {
-        ...prev[targetColumn],
-        items: [...prev[targetColumn].items, newItem],
-      },
-    }));
+    try {
+      const saved = await saveTask(newItem);
+      setColumns((prev) => ({
+        ...prev,
+        [targetColumn]: {
+          ...prev[targetColumn],
+          items: [...prev[targetColumn].items, { ...saved, timesheet: saved.timesheet || [], id: String(saved.id) }],
+        },
+      }));
 
-    setNewTask("");
-    setNewResponsible("");
-    setNewCreationDate("");
-    setNewDeadline("");
-  };
-  
-  // Eliminar tarjeta
-  const deleteTask = (colId, taskId) => {
-    setColumns((prev) => ({
-      ...prev,
-      [colId]: {
-        ...prev[colId],
-        items: prev[colId].items.filter((item) => item.id !== taskId),
-      },
-    }));
+      setNewTask("");
+      setNewResponsible("");
+      setNewCreationDate("");
+      setNewDeadline("");
+    } catch (error) {
+      console.error("Error añadiendo tarea:", error);
+      setWarningModal({
+        text: `Error añadiendo tarea: ${error.message || error}`,
+        onClose: () => setWarningModal(null),
+      });
+    }
   };
 
-  // Guardar horas con validación de fecha y minutos
+  // 🔹 Añadir horas a una tarea (fechas corregidas)
   const addHoursToTask = () => {
     const { columnId, taskId, date, hours, minutes, note } = hoursModal;
     if (!date || !hours) return;
 
-    const task = columns[columnId].items.find(item => item.id === taskId);
+    const task = columns[columnId].items.find((item) => item.id === taskId);
 
-    const selectedDate = new Date(date);
-    selectedDate.setHours(0, 0, 0, 0); // <--- esto ignora horas, minutos y segundos
+    // Convertir fecha de la tarea (creationDate) a objeto Date
+    const [tYear, tMonth, tDay] = task.creationDate.split("-").map(Number);
+    const creationDate = new Date(tYear, tMonth - 1, tDay);
 
+    // Convertir fecha seleccionada a objeto Date
+    const [sYear, sMonth, sDay] = date.split("-").map(Number);
+    const selectedDate = new Date(sYear, sMonth - 1, sDay);
+
+    // Fecha de hoy (sin horas)
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // eliminamos la hora para comparar solo la fecha
-    today.setHours(0,0,0,0); // eliminamos la hora para comparar solo la fecha
+    today.setHours(0, 0, 0, 0);
 
-    // Validar que la fecha no sea anterior a la fecha de inicio
-    if (selectedDate < new Date(task.creationDate)) {
+    if (selectedDate < creationDate) {
       const previousHoursModal = { ...hoursModal };
       setHoursModal(null);
       setWarningModal({
@@ -162,12 +185,11 @@ export default function KanbanBoard() {
         onClose: () => {
           setWarningModal(null);
           setHoursModal(previousHoursModal);
-        }
+        },
       });
       return;
     }
 
-    // Validar que la fecha no sea futura
     if (selectedDate > today) {
       const previousHoursModal = { ...hoursModal };
       setHoursModal(null);
@@ -176,19 +198,22 @@ export default function KanbanBoard() {
         onClose: () => {
           setWarningModal(null);
           setHoursModal(previousHoursModal);
-        }
+        },
       });
       return;
     }
 
-    // Guardar horas
-    setColumns(prev => {
+    // Añadir horas a la tarea
+    setColumns((prev) => {
       const col = prev[columnId];
-      const newItems = col.items.map(item => {
+      const newItems = col.items.map((item) => {
         if (item.id === taskId) {
           return {
             ...item,
-            timesheet: [...item.timesheet, { date, hours: Number(hours), minutes: Number(minutes), note }],
+            timesheet: [
+              ...item.timesheet,
+              { date, hours: Number(hours), minutes: Number(minutes), note },
+            ],
           };
         }
         return item;
@@ -199,15 +224,31 @@ export default function KanbanBoard() {
     setHoursModal(null);
   };
 
+  const deleteTask = async (columnId, taskId) => {
+    try {
+      await removeTask(taskId);
+      setColumns((prev) => {
+        const col = prev[columnId];
+        const newItems = col.items.filter((item) => item.id !== taskId);
+        return { ...prev, [columnId]: { ...col, items: newItems } };
+      });
+    } catch (error) {
+      console.error("Error eliminando tarea:", error);
+      setWarningModal({
+        text: `Error eliminando tarea: ${error.message || error}`,
+        onClose: () => setWarningModal(null),
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col items-center">
-      {/* Encabezado */}
       <div className="flex flex-col items-center mb-6">
         <h2 className="text-3xl font-bold mb-1 text-center">DataFlow Manager</h2>
         <p className="text-gray-500 text-sm text-center">Nexeus Project Dashboard</p>
       </div>
 
-      {/* Crear nueva tarea */}
+      {/* Inputs para nueva tarea */}
       <div className="flex flex-col sm:flex-row gap-2 mb-2 items-end">
         <input
           type="text"
@@ -252,25 +293,7 @@ export default function KanbanBoard() {
         </button>
       </div>
 
-      {/* Textos de fecha debajo de los inputs */}
-      <div className="flex flex-row gap-2 mb-10 items-center">
-        <div className="w-48"></div>
-        <div className="w-36"></div>
-        <div className="w-36 flex justify-center">
-          <span className="text-xs italic text-gray-500" style={{ transform: "translateX(-40px) translateY(-5px)" }}>
-            Fecha inicio
-          </span>
-        </div>
-        <div className="w-36 flex justify-center">
-          <span className="text-xs italic text-gray-500" style={{ transform: "translateX(-40px) translateY(-5px)" }}>
-            Fecha límite
-          </span>
-        </div>
-        <div className="w-36"></div>
-        <div className="w-auto"></div>
-      </div>
-
-      {/* Tablero Kanban */}
+      {/* Kanban */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-6 justify-center w-full flex-wrap">
           {Object.entries(columns).map(([columnId, column]) => (
@@ -285,54 +308,14 @@ export default function KanbanBoard() {
                 >
                   <h3 className="text-lg font-semibold text-center mb-3">{column.name}</h3>
                   {column.items.map((item, index) => (
-                    <Draggable key={item.id} draggableId={item.id} index={index}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`p-2 mb-2 rounded shadow-sm flex flex-col justify-between transition-all ${
-                            snapshot.isDragging ? "bg-blue-200 scale-105" : "bg-blue-50"
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span>{item.content}</span>
-                            <button
-                              className="text-red-500 hover:text-red-700 ml-2"
-                              onClick={() =>
-                                setConfirmDeleteTask({ columnId, taskId: item.id, content: item.content })
-                              }
-                            >
-                              ✕
-                            </button>
-                          </div>
-                          <div className="text-xs text-gray-700 mt-1">
-                            Responsable: {item.responsible || "-"} <br/>
-                            Creación: {item.creationDate || "-"} <br/>
-                            Fecha límite: {item.dueDate || "-"}
-                          </div>
-                          <div className="flex flex-col mt-1">
-                            <button
-                              className="text-green-600 hover:text-green-800 text-xs mb-1 self-start"
-                              onClick={() =>
-                                setHoursModal({ columnId, taskId: item.id, date: "", hours: "", minutes: "", note: "" })
-                              }
-                            >
-                              Añadir horas
-                            </button>
-                            {item.timesheet.length > 0 && (
-                              <div className="text-xs text-gray-600">
-                                {item.timesheet.map((entry, i) => (
-                                  <div key={i}>
-                                    {entry.date}: {entry.hours}h {entry.minutes}m {entry.note && `- ${entry.note}`}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
+                    <TaskCard
+                      key={item.id}
+                      task={item}
+                      index={index}
+                      columnId={columnId}
+                      setConfirmDeleteTask={setConfirmDeleteTask}
+                      setHoursModal={setHoursModal}
+                    />
                   ))}
                   {provided.placeholder}
                 </div>
@@ -342,7 +325,7 @@ export default function KanbanBoard() {
         </div>
       </DragDropContext>
 
-      {/* Confirmación eliminar tarjeta */}
+      {/* Confirmar eliminación */}
       {confirmDeleteTask && (
         <Message
           text={`¿Seguro que quieres eliminar la tarea "${confirmDeleteTask.content}"?`}
@@ -379,14 +362,12 @@ export default function KanbanBoard() {
               ✕
             </button>
 
-            <p className="mb-2 font-semibold text-center mt-6">
-              Registrar horas de la tarea
-            </p>
+            <p className="mb-2 font-semibold text-center mt-6">Registrar horas de la tarea</p>
 
             <input
               type="date"
               value={hoursModal.date}
-              onChange={(e) => setHoursModal(prev => ({ ...prev, date: e.target.value }))}
+              onChange={(e) => setHoursModal((prev) => ({ ...prev, date: e.target.value }))}
               className="border p-2 rounded w-full mb-2"
             />
 
@@ -395,7 +376,7 @@ export default function KanbanBoard() {
                 type="number"
                 min="0"
                 value={hoursModal.hours}
-                onChange={(e) => setHoursModal(prev => ({ ...prev, hours: e.target.value }))}
+                onChange={(e) => setHoursModal((prev) => ({ ...prev, hours: e.target.value }))}
                 placeholder="Horas"
                 className="border p-2 rounded w-1/2"
               />
@@ -404,7 +385,7 @@ export default function KanbanBoard() {
                 min="0"
                 max="59"
                 value={hoursModal.minutes}
-                onChange={(e) => setHoursModal(prev => ({ ...prev, minutes: e.target.value }))}
+                onChange={(e) => setHoursModal((prev) => ({ ...prev, minutes: e.target.value }))}
                 placeholder="Minutos"
                 className="border p-2 rounded w-1/2"
               />
@@ -413,7 +394,7 @@ export default function KanbanBoard() {
             <input
               type="text"
               value={hoursModal.note}
-              onChange={(e) => setHoursModal(prev => ({ ...prev, note: e.target.value }))}
+              onChange={(e) => setHoursModal((prev) => ({ ...prev, note: e.target.value }))}
               placeholder="Nota (opcional)"
               className="border p-2 rounded w-full mb-2"
             />
@@ -428,11 +409,9 @@ export default function KanbanBoard() {
         </Message>
       )}
 
+      {/* Modal advertencia */}
       {warningModal && (
-        <Message
-          text={warningModal.text}
-          onClose={warningModal.onClose || (() => setWarningModal(null))}
-        />
+        <Message text={warningModal.text} onClose={warningModal.onClose || (() => setWarningModal(null))} />
       )}
     </div>
   );

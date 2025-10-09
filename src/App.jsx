@@ -10,7 +10,7 @@ function Message({ text, onClose, children }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded shadow-md max-w-sm text-center">
-        {text && <p className="mb-4 whitespace-pre-line">{text}</p>} 
+        {text && <p className="mb-4 whitespace-pre-line">{text}</p>}
         {children}
         {!children && (
           <button
@@ -28,33 +28,33 @@ function Message({ text, onClose, children }) {
 function App() {
   const [user, setUser] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
-  const [message, setMessage] = useState(""); // Mensaje central
-  const [confirmDelete, setConfirmDelete] = useState(false); // Confirmación eliminar cuenta
-  const [confirmLogout, setConfirmLogout] = useState(false); // Confirmación cerrar sesión
+  const [message, setMessage] = useState(""); 
+  const [confirmDelete, setConfirmDelete] = useState(false); 
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
+  // Mantener sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      setUser(currentUser || null);
     });
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = () => {
-    setConfirmLogout(true); // mostramos confirmación
-  };
-
+  const handleLogout = () => setConfirmLogout(true);
   const confirmLogoutUser = async () => {
-    await signOut(auth);
-    setUser(null);
-    setConfirmLogout(false);
-    setMessage("Has cerrado sesión correctamente.");
+    try {
+      await signOut(auth);
+      setUser(null);
+      setConfirmLogout(false);
+      setMessage("Has cerrado sesión correctamente.");
+    } catch (err) {
+      setMessage("Error al cerrar sesión: " + err.message);
+    }
   };
 
-  const handleDeleteAccount = () => {
-    setConfirmDelete(true); // mostramos confirmación
-  };
-
+  const handleDeleteAccount = () => setConfirmDelete(true);
   const confirmDeleteAccount = async () => {
+    if (!auth.currentUser) return;
     try {
       await deleteUser(auth.currentUser);
       setUser(null);
@@ -74,6 +74,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-200 p-6 relative">
       {message && <Message text={message} onClose={() => setMessage("")} />}
+      
       {confirmDelete && (
         <Message
           text="¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
@@ -95,6 +96,7 @@ function App() {
           </div>
         </Message>
       )}
+
       {confirmLogout && (
         <Message
           text="¿Seguro que quieres cerrar sesión?"
@@ -149,7 +151,6 @@ function App() {
         <>
           <KanbanBoard />
 
-          {/* Botones fijos abajo y centrados */}
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
             <button
               className="bg-red-500 text-white px-4 py-2 rounded"
