@@ -52,7 +52,7 @@ npm run dev
 Acceder en el navegador a: 
 http://localhost:5173.
 ```
-"Estructura principal del proyecto:"
+5. Estructura principal del proyecto:
 "202509-sigma/"
 ├─ "public/"
 ├─ "src/"
@@ -65,6 +65,7 @@ http://localhost:5173.
 ├─ "package.json"
 ├─ "vite.config.js"
 └─ "tailwind.config.cjs"
+```
 
 Dependencias principales:
 React 18+
