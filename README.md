@@ -31,7 +31,7 @@ npm install
 3. Configurar Firebase:
 Copiar el siguiente contenido en un archivo .env en la raíz del proyecto: (src/.env)
 
-```
+
 # =========================================================
 # Variables de entorno para Firebase - Proyecto Oficial
 # =========================================================
