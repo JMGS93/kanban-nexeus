@@ -52,22 +52,19 @@ npm run dev
 Acceder en el navegador a: 
 http://localhost:5173.
 ```
-
-Estructura principal del proyecto:
-202509-sigma/
-├─ public/
-├─ src/
-│  ├─ components/       # Componentes React (TaskCard, Column, Modals)
-│  ├─ screens/          # Pantallas principales (KanbanBoard, Login)
-│  ├─ firestoreTasks.js # Funciones CRUD con Firestore
-│  ├─ App.jsx           # Componente principal
-│  └─ main.jsx          # Punto de entrada
-├─ .env                 # Configuración Firebase
-├─ package.json
-├─ vite.config.js
-└─ tailwind.config.cjs
-```
-
+"Estructura principal del proyecto:"
+"202509-sigma/"
+├─ "public/"
+├─ "src/"
+│  ├─ "components/"       # Componentes React (TaskCard, Column, Modals)
+│  ├─ "screens/"          # Pantallas principales (KanbanBoard, Login)
+│  ├─ "firestoreTasks.js" # Funciones CRUD con Firestore
+│  ├─ "App.jsx"           # Componente principal
+│  └─ "main.jsx"          # Punto de entrada
+├─ ".env"                 # Configuración Firebase
+├─ "package.json"
+├─ "vite.config.js"
+└─ "tailwind.config.cjs"
 
 Dependencias principales:
 React 18+
