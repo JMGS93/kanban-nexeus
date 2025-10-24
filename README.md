@@ -1,16 +1,78 @@
-# React + Vite
+# KANBAN-NEXEUS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tablero Kanban avanzado construido con **React** y **Vite**, con soporte para:
 
-Currently, two official plugins are available:
+- Creación, edición y eliminación de tareas.
+- Drag & Drop para mover tareas entre columnas.
+- Registro de horas trabajadas por fecha (timesheet).
+- Validación de fechas y mensajes modales.
+- Integración con **Firestore** para persistencia de datos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Requisitos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js >= 18.x
+- npm >= 9.x o yarn >= 3.x
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Instalación
+
+1. Clonar el repositorio oficial del equipo:
+
+```bash
+git clone https://github.com/Nexeus-Big-Data-Labs/202509-sigma.git
+cd 202509-sigma
+
+2. Instalar dependencias:
+npm install
+
+3. Configurar Firebase:
+Copiar el siguiente contenido en un archivo .env en la raíz del proyecto: (src/.env)
+
+# =========================================================
+# Variables de entorno para Firebase - Proyecto Oficial
+# =========================================================
+
+```VITE_FIREBASE_API_KEY=AIzaSyAt9zCGP19etDuHx6Wr7iCmNVNaAQJEdeY
+VITE_FIREBASE_AUTH_DOMAIN=kanban-nexeus.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=kanban-nexeus
+VITE_FIREBASE_STORAGE_BUCKET=kanban-nexeus.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=105629778633
+VITE_FIREBASE_APP_ID=1:105629778633:web:741833647f6a3b13e04318
+VITE_FIREBASE_MEASUREMENT_ID=G-910KW8CD2G
+```
+
+4. Inicializar la base de datos
+npm run dev
+
+Acceder en el navegador a: http://localhost:5173.
+
+```Estructura principal del proyecto
+"202509-sigma/"
+├─ "public/"
+├─ "src/"
+│  ├─ "components/"       # Componentes React (TaskCard, Column, Modals)
+│  ├─ "screens/"          # Pantallas principales (KanbanBoard, Login)
+│  ├─ "firestoreTasks.js" # Funciones CRUD con Firestore
+│  ├─ "App.jsx"           # Componente principal
+│  └─ "main.jsx"          # Punto de entrada
+├─ ".env"                 # Configuración Firebase
+├─ "package.json"
+├─ "vite.config.js"
+└─ "tailwind.config.cjs"
+```
+
+
+Dependencias principales:
+React 18+
+Vite
+TailwindCSS
+@hello-pangea/dnd (Drag & Drop)
+Firebase (Firestore)
+
+Notas importantes:
+Antes de ejecutar, asegúrate de tener el archivo .env con las credenciales proporcionadas.
+El tablero se inicializa vacío si no hay tareas en Firestore.
+
