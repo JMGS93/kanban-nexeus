@@ -31,11 +31,12 @@ npm install
 3. Configurar Firebase:
 Copiar el siguiente contenido en un archivo .env en la raíz del proyecto: (src/.env)
 
+```
 # =========================================================
 # Variables de entorno para Firebase - Proyecto Oficial
 # =========================================================
 
-```VITE_FIREBASE_API_KEY=AIzaSyAt9zCGP19etDuHx6Wr7iCmNVNaAQJEdeY
+VITE_FIREBASE_API_KEY=AIzaSyAt9zCGP19etDuHx6Wr7iCmNVNaAQJEdeY
 VITE_FIREBASE_AUTH_DOMAIN=kanban-nexeus.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=kanban-nexeus
 VITE_FIREBASE_STORAGE_BUCKET=kanban-nexeus.firebasestorage.app
