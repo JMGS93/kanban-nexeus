@@ -47,10 +47,13 @@ VITE_FIREBASE_MEASUREMENT_ID=G-910KW8CD2G
 
 4. Inicializar la base de datos
 npm run dev
+```
 
-Acceder en el navegador a: http://localhost:5173.
+Acceder en el navegador a: 
+http://localhost:5173.
+```
 
-```Estructura principal del proyecto
+Estructura principal del proyecto:
 "202509-sigma/"
 ├─ "public/"
 ├─ "src/"
@@ -72,6 +75,7 @@ Vite
 TailwindCSS
 @hello-pangea/dnd (Drag & Drop)
 Firebase (Firestore)
+```
 
 Notas importantes:
 Antes de ejecutar, asegúrate de tener el archivo .env con las credenciales proporcionadas.
