@@ -91,4 +91,4 @@ npm run dev
 ## Notas importantes
 
 * Antes de ejecutar, asegúrate de tener el archivo `.env` con las credenciales proporcionadas.
-* El tablero se inicializa vacío si no hay tare
+* El tablero se inicializa vacío si no hay tareas.
