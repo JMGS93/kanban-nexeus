@@ -128,17 +128,11 @@ export default function KanbanBoard() {
     fetchData();
   }, []);
 
-  /**
-   * onDragEnd()
-   * ---------------------------------------------------
-   * Maneja el movimiento de tarjetas entre columnas o dentro de la misma.
-   * Actualiza el estado local y sincroniza con Firestore si cambia la columna (status).
-   */
-  const onDragEnd = async (result) => {
+  const onDragEnd = (result) => {
     if (!result.destination) return;
     const { source, destination } = result;
 
-    // Si la tarea se mueve dentro de la misma columna
+    // Movimiento dentro de la misma columna
     if (source.droppableId === destination.droppableId) {
       const column = columns[source.droppableId];
       const newItems = Array.from(column.items);
@@ -149,25 +143,31 @@ export default function KanbanBoard() {
         ...columns,
         [source.droppableId]: { ...column, items: newItems },
       });
-    } else {
-      // Si la tarea se mueve entre columnas diferentes
-      const sourceColumn = columns[source.droppableId];
-      const destColumn = columns[destination.droppableId];
-      const sourceItems = Array.from(sourceColumn.items);
-      const destItems = Array.from(destColumn.items);
-      const [movedItem] = sourceItems.splice(source.index, 1);
-      destItems.splice(destination.index, 0, movedItem);
 
-      // Actualizar estado en Firestore
-      movedItem.status = destination.droppableId;
-      await updateTask(movedItem.id, { status: movedItem.status });
-
-      setColumns({
-        ...columns,
-        [source.droppableId]: { ...sourceColumn, items: sourceItems },
-        [destination.droppableId]: { ...destColumn, items: destItems },
-      });
+      // Opcional: no hay Firestore que actualizar si solo es reordenamiento local
+      return;
     }
+
+    // Movimiento entre columnas diferentes
+    const sourceColumn = columns[source.droppableId];
+    const destColumn = columns[destination.droppableId];
+    const sourceItems = Array.from(sourceColumn.items);
+    const destItems = Array.from(destColumn.items);
+    const [movedItem] = sourceItems.splice(source.index, 1);
+    destItems.splice(destination.index, 0, movedItem);
+
+    // Actualizar estado local primero (evita efecto "retroceso")
+    setColumns({
+      ...columns,
+      [source.droppableId]: { ...sourceColumn, items: sourceItems },
+      [destination.droppableId]: { ...destColumn, items: destItems },
+    });
+
+    // Actualizar Firestore de manera asíncrona, sin bloquear UI
+    movedItem.status = destination.droppableId;
+    updateTask(movedItem.id, { status: movedItem.status }).catch((err) => {
+      console.error("Error actualizando tarea en Firestore:", err);
+    });
   };
 
   /**
