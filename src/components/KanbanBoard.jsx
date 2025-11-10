@@ -342,25 +342,40 @@ export default function KanbanBoard() {
         <p className="text-gray-500 text-sm text-center">Nexeus Project Dashboard</p>
       </div>
 
-      {/* Formulario de nueva tarea */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-2 items-end">
+      {/* Línea de inputs */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-2 items-start">
         <input type="text" className="border p-2 rounded w-48" placeholder="Nueva tarea..." value={newTask} onChange={(e) => setNewTask(e.target.value)} />
         <input type="text" className="border p-2 rounded w-36" placeholder="Responsable..." value={newResponsible} onChange={(e) => setNewResponsible(e.target.value)} />
-        <input type="date" className="border p-2 rounded w-36" value={newCreationDate} onChange={(e) => setNewCreationDate(e.target.value)} />
-        <input type="date" className="border p-2 rounded w-36" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} />
+
+        {/* Fecha creación */}
+        <div className="flex flex-col items-center gap-1 w-36">
+          <input type="date" className="border p-2 rounded w-full" value={newCreationDate} onChange={(e) => setNewCreationDate(e.target.value)} />
+          <span className="text-xs italic text-center">Fecha creación</span>
+        </div>
+
+        {/* Fecha límite */}
+        <div className="flex flex-col items-center gap-1 w-36">
+          <input type="date" className="border p-2 rounded w-full" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} />
+          <span className="text-xs italic text-center">Fecha límite</span>
+        </div>
+
         <select className="border p-2 rounded w-36" value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)}>
           {Object.entries(columns).map(([id, col]) => (
             <option key={id} value={id}>{col.name}</option>
           ))}
         </select>
+
         <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={addTask}>
           Añadir
         </button>
       </div>
 
-      {/* Cuerpo del tablero Kanban */}
+      {/* 🔹 Línea separadora */}
+      <hr className="w-full border-gray-300 my-6" />
+
+      {/* Tablero Kanban separado 30px */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-6 justify-center w-full flex-wrap">
+        <div className="flex gap-6 justify-center w-full flex-wrap mt-[30px]">
           {Object.entries(columns).map(([columnId, column]) => (
             <Droppable key={columnId} droppableId={columnId}>
               {(provided, snapshot) => (
@@ -389,7 +404,7 @@ export default function KanbanBoard() {
           ))}
         </div>
       </DragDropContext>
-
+      
       {/* Modales de confirmación y advertencias */}
       {confirmDeleteTask && (
         <Message

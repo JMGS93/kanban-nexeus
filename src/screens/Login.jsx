@@ -1,33 +1,23 @@
-// src/screens/Register.jsx
-// -------------------------------------------------------------
-// ✅ Este componente gestiona el registro de nuevos usuarios
-// con verificación por correo electrónico antes de activar la cuenta.
-// -------------------------------------------------------------
-
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-export default function Register({ onRegister = () => {}, onSwitch = () => {} }) {
+export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setMessage("");
-
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
-      setLoading(false);
-      return;
-    }
 
     if (!email || !password) {
       setError("Email y contraseña son obligatorios.");
@@ -36,43 +26,82 @@ export default function Register({ onRegister = () => {}, onSwitch = () => {} })
     }
 
     try {
-      // 🔹 Crear el usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 🔹 Guardar en Firestore
-      await setDoc(doc(db, "sigma", user.uid), {
-        email: user.email,
-        createdAt: new Date().toISOString(),
-      });
+      await user.reload();
 
-      // 🔹 Enviar correo de verificación
-      await sendEmailVerification(user, {
-        url: "https://kanban-nexeus.web.app/login", // ✅ dominio autorizado
-        handleCodeInApp: true,
-      });
+      if (!user.emailVerified) {
+        setError("⚠️ Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+        await auth.signOut();
+        setLoading(false);
+        return;
+      }
 
-      // 🔹 Cerrar sesión para impedir acceso sin verificar
-      await auth.signOut();
+      const userDoc = await getDoc(doc(db, "sigma", user.uid));
+      if (!userDoc.exists()) {
+        setError("⚠️ Tu cuenta existe pero no está registrada en la base de datos del proyecto.");
+        await auth.signOut();
+        setLoading(false);
+        return;
+      }
 
-      setMessage("✅ Se ha enviado un enlace de verificación a tu correo. Por favor, revisa tu bandeja de entrada antes de iniciar sesión.");
+      onLogin(user);
     } catch (err) {
-      console.error("Error en registro:", err);
+      console.error("Login error:", err);
       switch (err.code) {
-        case "auth/email-already-in-use":
-          setError("El correo ya está registrado.");
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+          setError("Correo electrónico o contraseña incorrectos.");
           break;
         case "auth/invalid-email":
           setError("Correo electrónico inválido.");
           break;
-        case "auth/weak-password":
-          setError("La contraseña debe tener al menos 6 caracteres.");
-          break;
         default:
-          setError(err.message || "Error al registrar usuario.");
+          setError(err.message || "Error al iniciar sesión.");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetMessage("");
+
+    try {
+      if (!resetEmail) {
+        setResetMessage("Por favor ingresa tu correo.");
+        setResetLoading(false);
+        return;
+      }
+
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetMessage("✅ Se ha enviado un correo para restablecer tu contraseña.");
+
+      // Cerrar modal automáticamente después de 5 segundos
+      setTimeout(() => {
+        setShowReset(false);
+        setResetEmail("");
+        setResetMessage("");
+      }, 3000);
+
+    } catch (err) {
+      console.error("Reset error:", err);
+      switch (err.code) {
+        case "auth/user-not-found":
+          setResetMessage("⚠️ No existe un usuario con ese correo.");
+          break;
+        case "auth/invalid-email":
+          setResetMessage("Correo inválido.");
+          break;
+        default:
+          setResetMessage(err.message || "Error al enviar correo de recuperación.");
+      }
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -147,11 +176,6 @@ export default function Register({ onRegister = () => {}, onSwitch = () => {} })
           margin-bottom: 10px;
           font-weight: 600;
         }
-        .success-message {
-          color: #2a9d8f;
-          margin-bottom: 10px;
-          font-weight: 600;
-        }
         .login-link {
           margin-top: 1.2rem;
           font-size: 0.95rem;
@@ -189,9 +213,7 @@ export default function Register({ onRegister = () => {}, onSwitch = () => {} })
 
       <div className="login-container">
         <div className="login-box">
-          <h1>Registrar usuario</h1>
-
-          {message && <p className="success-message">{message}</p>}
+          <h1>Iniciar sesión</h1>
           {error && <p className="error-message">{error}</p>}
 
           <form onSubmit={handleSubmit}>
@@ -217,31 +239,91 @@ export default function Register({ onRegister = () => {}, onSwitch = () => {} })
               disabled={loading}
             />
 
-            <label htmlFor="confirmPassword">Confirmar contraseña</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              placeholder="Repite tu contraseña"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-
             <button type="submit" disabled={loading}>
               {loading && <span className="button-spinner" />}
-              <span className="ml-2">{loading ? "Registrando..." : "Regístrate"}</span>
+              <span className="ml-2">{loading ? "Iniciando..." : "Iniciar Sesión"}</span>
             </button>
           </form>
 
           <p className="login-link">
-            ¿Ya tienes cuenta?{" "}
+            ¿Olvidaste tu contraseña?{" "}
+            <button type="button" className="link-button" onClick={() => setShowReset(true)}>
+              Recuperar
+            </button>
+          </p>
+
+          <p className="login-link">
+            ¿No tienes cuenta?{" "}
             <button type="button" onClick={onSwitch} className="link-button">
-              Inicia sesión
+              Regístrate
             </button>
           </p>
         </div>
       </div>
+
+      {showReset && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: "#fff",
+            padding: "2rem",
+            borderRadius: "12px",
+            width: "350px",
+            textAlign: "center",
+            position: "relative"
+          }}>
+            <h2>Recuperar contraseña</h2>
+
+            <input
+              type="email"
+              placeholder="Ingresa tu correo"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              disabled={resetLoading}
+              style={{
+                width: "100%",
+                padding: "0.6rem",
+                margin: "1rem 0",
+                borderRadius: "8px",
+                border: "1px solid #ccc"
+              }}
+            />
+
+            {resetMessage && (
+              <p style={{ color: resetMessage.includes("✅") ? "green" : "red", marginBottom: "1rem" }}>
+                {resetMessage}
+              </p>
+            )}
+
+            <button
+              onClick={handlePasswordReset}
+              disabled={resetLoading}
+              style={{
+                backgroundColor: "#1d3557",
+                color: "#fff",
+                padding: "0.7rem",
+                borderRadius: "8px",
+                width: "100%",
+                fontWeight: "bold",
+                cursor: "pointer",
+                marginBottom: "0.5rem"
+              }}
+            >
+              {resetLoading ? "Enviando..." : "Enviar correo"}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

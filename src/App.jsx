@@ -1,34 +1,37 @@
 // Importaciones principales de React y Firebase
 import React, { useState, useEffect } from "react";
-import KanbanBoard from "./components/KanbanBoard"; // Tablero principal de tareas (Kanban)
-import Login from "./components/Login"; // Componente de inicio de sesión
-import Register from "./components/Register"; // Componente de registro
-import { auth } from "./firebase"; // Instancia del sistema de autenticación de Firebase
-import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth"; // Funciones de autenticación
+// Se importa el componente del tablero principal de tareas (Kanban).
+import KanbanBoard from "./components/KanbanBoard";
+// Se importa el componente de inicio de sesión desde la ruta CORRECTA.
+import Login from "./screens/Login";
+// Se importa el componente de registro desde la ruta CORRECTA.
+import Register from "./components/Register";
+// Se importa la instancia del sistema de autenticación de Firebase.
+import { auth } from "./firebase";
+// Se importan las funciones de autenticación de Firebase necesarias.
+import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
 
 // =========================================================
 // COMPONENTE: Message
-// ---------------------------------------------------------
-// Este componente reutilizable muestra mensajes modales centrados
-// en pantalla, como confirmaciones, errores o notificaciones.
-// Acepta texto, función de cierre y elementos hijos opcionales.
-// Si se pasan "children", estos reemplazan el botón estándar.
+// Este componente reutilizable muestra mensajes modales centrados.
 // =========================================================
 function Message({ text, onClose, children }) {
+  // Se define el estilo del overlay fijo con fondo semitransparente.
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+      {/* Se define el estilo del cuadro del mensaje (fondo blanco, sombra). */}
       <div className="bg-white p-6 rounded shadow-md max-w-sm text-center">
-        {/* Texto principal del mensaje */}
+        {/* Se muestra el texto principal del mensaje, permitiendo saltos de línea. */}
         {text && <p className="mb-4 whitespace-pre-line">{text}</p>}
 
-        {/* Si se pasan elementos hijos (botones personalizados, etc.) */}
+        {/* Si se pasan elementos hijos, se renderizan aquí. */}
         {children}
 
-        {/* Si no hay hijos, se muestra un botón "Aceptar" por defecto */}
+        {/* Si no hay hijos, se muestra un botón "Aceptar" por defecto. */}
         {!children && (
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded"
-            onClick={onClose}
+            onClick={onClose} // La función de cierre se llama al hacer clic.
           >
             Aceptar
           </button>
@@ -40,63 +43,71 @@ function Message({ text, onClose, children }) {
 
 // =========================================================
 // COMPONENTE PRINCIPAL: App
-// ---------------------------------------------------------
-// Controla todo el flujo de autenticación, renderizado condicional
-// de pantallas (Login, Register, Kanban) y manejo de sesión con Firebase.
+// Controla el flujo de autenticación, renderizado y manejo de sesión.
 // =========================================================
 function App() {
-  // Estado global del usuario autenticado (null si no hay sesión activa)
+  // Se almacena el estado global del usuario autenticado (null si no hay sesión activa).
   const [user, setUser] = useState(null);
 
-  // Estado para alternar entre pantalla de login y registro
+  // Se usa un estado booleano para alternar entre la pantalla de login (false) y registro (true).
   const [showRegister, setShowRegister] = useState(false);
 
-  // Mensaje informativo o de error mostrado en modal
+  // Se almacena el mensaje informativo o de error que se mostrará en el modal.
   const [message, setMessage] = useState("");
 
-  // Estados booleanos para mostrar los modales de confirmación
-  const [confirmDelete, setConfirmDelete] = useState(false); // Para eliminar cuenta
-  const [confirmLogout, setConfirmLogout] = useState(false); // Para cerrar sesión
+  // Se controla la visibilidad del modal de confirmación para eliminar cuenta.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Se controla la visibilidad del modal de confirmación para cerrar sesión.
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   // ---------------------------------------------------------
-  // Efecto para mantener la sesión del usuario al recargar la página.
-  // onAuthStateChanged se ejecuta automáticamente cada vez que cambia
-  // el estado de autenticación (login, logout, eliminación de cuenta, etc.)
+  // Efecto para escuchar cambios en el estado de autenticación de Firebase (al inicio).
   // ---------------------------------------------------------
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser || null); // Si hay usuario, lo guarda; si no, lo limpia
+      if (currentUser) {
+        if (currentUser.emailVerified) {
+          setUser(currentUser); // Usuario verificado
+        } else {
+          setUser(null); // Usuario no verificado -> bloqueado
+        }
+      } else {
+        setUser(null); // No hay usuario
+      }
     });
-    // Se devuelve la función para cancelar la suscripción al desmontar
     return () => unsubscribe();
   }, []);
 
   // =========================================================
-  // MANEJADORES DE SESIÓN
+  // MANEJADORES DE SESIÓN (Logout y eliminación de cuenta)
   // =========================================================
 
-  // Solicita confirmación antes de cerrar sesión
+  // Inicia el flujo de cierre de sesión al mostrar el modal de confirmación.
   const handleLogout = () => setConfirmLogout(true);
 
-  // Confirma y ejecuta el cierre de sesión
+  // Ejecuta el cierre de sesión en Firebase después de la confirmación.
   const confirmLogoutUser = async () => {
     try {
+      // Llama a la función signOut de Firebase Auth.
       await signOut(auth);
       setUser(null);
       setConfirmLogout(false);
       setMessage("Has cerrado sesión correctamente.");
     } catch (err) {
+      // Muestra un mensaje de error si el cierre de sesión falla.
       setMessage("Error al cerrar sesión: " + err.message);
     }
   };
 
-  // Solicita confirmación antes de eliminar cuenta
+  // Inicia el flujo de eliminación de cuenta al mostrar el modal.
   const handleDeleteAccount = () => setConfirmDelete(true);
 
-  // Confirma y ejecuta la eliminación de cuenta
+  // Ejecuta la eliminación de la cuenta en Firebase.
   const confirmDeleteAccount = async () => {
+    // Solo procede si hay un usuario logueado.
     if (!auth.currentUser) return;
     try {
+      // Llama a la función deleteUser de Firebase Auth.
       await deleteUser(auth.currentUser);
       setUser(null);
       setConfirmDelete(false);
@@ -107,63 +118,53 @@ function App() {
     }
   };
 
-  // Al registrar un usuario con éxito, lo establece en sesión
-  const handleRegister = (u) => {
-    setMessage("¡Registro exitoso!\nBienvenido a DataFlow Manager");
-    setUser(u);
+  const handleRegisterSuccess = () => {
+    // Muestra mensaje de éxito
+    setMessage("✅ Se ha enviado un enlace de verificación a tu correo. Por favor, revisa tu bandeja de entrada antes de iniciar sesión.");
+    // Cambia a la vista de Login
+    setShowRegister(false);
+  };
+
+  // Manejador de éxito de login, llamado desde Login.jsx.
+  const handleLoginSuccess = (u) => {
+      // Establece el usuario en sesión.
+      setUser(u);
   };
 
   // =========================================================
-  // RENDERIZADO PRINCIPAL
-  // ---------------------------------------------------------
-  // Muestra una pantalla u otra según el estado del usuario y las banderas.
+  // RENDERIZADO PRINCIPAL (Control de flujo de vistas)
   // =========================================================
   return (
+    // Contenedor principal de la aplicación.
     <div className="min-h-screen bg-gray-200 p-6 relative">
 
-      {/* Modal para mostrar mensajes (éxito, error, información, etc.) */}
+      {/* Se renderizan los modales de mensaje y confirmación si las banderas están activas. */}
       {message && <Message text={message} onClose={() => setMessage("")} />}
-
-      {/* Modal de confirmación para eliminar cuenta */}
       {confirmDelete && (
         <Message
           text="¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
           onClose={() => setConfirmDelete(false)}
         >
           <div className="mt-4 flex justify-center gap-4">
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
-              onClick={confirmDeleteAccount}
-            >
+            <button className="bg-red-500 text-white px-4 py-2 rounded" onClick={confirmDeleteAccount}>
               Sí, eliminar
             </button>
-            <button
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-              onClick={() => setConfirmDelete(false)}
-            >
+            <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setConfirmDelete(false)}>
               Cancelar
             </button>
           </div>
         </Message>
       )}
-
-      {/* Modal de confirmación para cerrar sesión */}
       {confirmLogout && (
         <Message
           text="¿Seguro que quieres cerrar sesión?"
           onClose={() => setConfirmLogout(false)}
         >
           <div className="mt-4 flex justify-center gap-4">
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
-              onClick={confirmLogoutUser}
-            >
+            <button className="bg-red-500 text-white px-4 py-2 rounded" onClick={confirmLogoutUser}>
               Sí, cerrar sesión
             </button>
-            <button
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-              onClick={() => setConfirmLogout(false)}
-            >
+            <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setConfirmLogout(false)}>
               Cancelar
             </button>
           </div>
@@ -171,58 +172,42 @@ function App() {
       )}
 
       {/* -----------------------------------------------------
-         BLOQUE 1: Usuario no autenticado
-         ----------------------------------------------------- */}
+          BLOQUE 1: Usuario NO autenticado (Login/Register)
+          ----------------------------------------------------- */}
       {!user ? (
         showRegister ? (
           // Pantalla de registro
-          <div className="min-h-screen flex flex-col justify-center items-center bg-gray-200 p-4">
-            <Register onRegister={handleRegister} />
-            <p className="text-center mt-2">
-              ¿Ya tienes cuenta?{" "}
-              <button
-                className="text-blue-500"
-                onClick={() => setShowRegister(false)}
-              >
-                Iniciar sesión
-              </button>
-            </p>
+          // Se pasa onSwitch para que el componente Register cambie a Login.
+          <div className="min-h-screen flex flex-col justify-center items-center p-4">
+            <Register
+                onRegisterSuccess={handleRegisterSuccess}
+                onSwitch={() => setShowRegister(false)} // Función para cambiar a Login.
+            />
           </div>
         ) : (
           // Pantalla de inicio de sesión
-          <div className="min-h-screen flex flex-col justify-center items-center bg-gray-200 p-4">
-            <Login onLogin={setUser} />
-            <p className="text-center mt-2">
-              ¿No tienes cuenta?{" "}
-              <button
-                className="text-blue-500"
-                onClick={() => setShowRegister(true)}
-              >
-                Registrarse
-              </button>
-            </p>
+          // Se pasa onSwitch para que el componente Login cambie a Register.
+          <div className="min-h-screen flex flex-col justify-center items-center p-4">
+            <Login
+                onLoginSuccess={handleLoginSuccess}
+                onSwitch={() => setShowRegister(true)} // Función para cambiar a Register.
+            />
           </div>
         )
       ) : (
         /* -----------------------------------------------------
-           BLOQUE 2: Usuario autenticado
+           BLOQUE 2: Usuario SÍ autenticado (Tablero)
            ----------------------------------------------------- */
         <>
           {/* Muestra el tablero Kanban principal */}
-          <KanbanBoard />
+          <KanbanBoard uid={user.uid} />
 
-          {/* Barra inferior con botones de acciones de sesión */}
+          {/* Barra inferior fija con botones de acciones de sesión */}
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
-              onClick={handleLogout}
-            >
+            <button className="bg-red-500 text-white px-4 py-2 rounded" onClick={handleLogout}>
               Cerrar sesión
             </button>
-            <button
-              className="bg-gray-700 text-white px-4 py-2 rounded"
-              onClick={handleDeleteAccount}
-            >
+            <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={handleDeleteAccount}>
               Eliminar cuenta
             </button>
           </div>
@@ -232,4 +217,5 @@ function App() {
   );
 }
 
+// Se exporta el componente App para que pueda ser usado en main.jsx.
 export default App;
