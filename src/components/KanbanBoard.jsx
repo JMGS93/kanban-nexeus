@@ -21,6 +21,7 @@ import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { getAllTasks, saveTask, updateTask, removeTask } from "../firestoreTasks";
 import TaskCard from "../components/TaskCard";
+import { exportCompletedTasksToCSV } from "../utils/exportCSV";
 
 /**
  * parseDate()
@@ -82,6 +83,7 @@ export default function KanbanBoard() {
 
   // Estado de modales (confirmaciones, advertencias, registro de horas)
   const [confirmDeleteTask, setConfirmDeleteTask] = useState(null);
+  const [totalHours, setTotalHours] = useState(0);
   const [hoursModal, setHoursModal] = useState(null);
   const [warningModal, setWarningModal] = useState(null);
 
@@ -105,6 +107,9 @@ export default function KanbanBoard() {
           done: { name: "Completado", items: [] },
         };
 
+        // Variable para acumular horas de todas las tareas
+        let accumulatedHours = 0;
+
         tasks?.forEach((t) => {
           const colKey = t.status || "todo";
           if (newCols[colKey]) {
@@ -114,9 +119,16 @@ export default function KanbanBoard() {
               id: String(t.id),
             });
           }
+
+          // Sumar horas de la tarea
+          accumulatedHours += t.timesheet?.reduce(
+            (sum, entry) => sum + entry.hours + (entry.minutes || 0) / 60,
+            0
+          ) || 0;
         });
 
         setColumns(newCols);
+        setTotalHours(accumulatedHours); // Inicializar total histórico
       } catch (err) {
         console.error("Error cargando tareas:", err);
         setWarningModal({
@@ -127,6 +139,7 @@ export default function KanbanBoard() {
     }
     fetchData();
   }, []);
+
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -144,7 +157,6 @@ export default function KanbanBoard() {
         [source.droppableId]: { ...column, items: newItems },
       });
 
-      // Opcional: no hay Firestore que actualizar si solo es reordenamiento local
       return;
     }
 
@@ -154,18 +166,26 @@ export default function KanbanBoard() {
     const sourceItems = Array.from(sourceColumn.items);
     const destItems = Array.from(destColumn.items);
     const [movedItem] = sourceItems.splice(source.index, 1);
+
+    // 🔹 Si se mueve a "done", registrar fecha de cierre
+    if (destination.droppableId === "done" && !movedItem.completedDate) {
+      movedItem.completedDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    }
+
     destItems.splice(destination.index, 0, movedItem);
 
-    // Actualizar estado local primero (evita efecto "retroceso")
+    // Actualizar estado local
     setColumns({
       ...columns,
       [source.droppableId]: { ...sourceColumn, items: sourceItems },
       [destination.droppableId]: { ...destColumn, items: destItems },
     });
 
-    // Actualizar Firestore de manera asíncrona, sin bloquear UI
-    movedItem.status = destination.droppableId;
-    updateTask(movedItem.id, { status: movedItem.status }).catch((err) => {
+    // Actualizar Firestore
+    const updateData = { status: destination.droppableId };
+    if (movedItem.completedDate) updateData.completedDate = movedItem.completedDate;
+
+    updateTask(movedItem.id, updateData).catch((err) => {
       console.error("Error actualizando tarea en Firestore:", err);
     });
   };
@@ -277,7 +297,7 @@ export default function KanbanBoard() {
       return;
     }
 
-    // Actualizar estado local
+    // Actualizar estado local de la tarea
     const updatedTask = {
       ...task,
       timesheet: [
@@ -286,6 +306,7 @@ export default function KanbanBoard() {
       ],
     };
 
+    // Actualizar columnas
     setColumns((prev) => {
       const col = prev[columnId];
       const newItems = col.items.map((item) =>
@@ -293,6 +314,9 @@ export default function KanbanBoard() {
       );
       return { ...prev, [columnId]: { ...col, items: newItems } };
     });
+
+    // 🔹 Actualizar total histórico de horas
+    setTotalHours((prevTotal) => prevTotal + Number(hours) + (Number(minutes) || 0) / 60);
 
     // Guardar en Firestore
     try {
@@ -306,6 +330,32 @@ export default function KanbanBoard() {
     }
 
     setHoursModal(null);
+  };
+
+  // Devuelve un objeto con horas totales por responsable
+  const getHoursByResponsible = () => {
+    const totals = {};
+
+    Object.values(columns).forEach(col => {
+      col.items.forEach(task => {
+        const taskHours = task.timesheet?.reduce(
+          (sum, entry) => sum + entry.hours + (entry.minutes || 0)/60,
+          0
+        ) || 0;
+
+        if (taskHours > 0) { // ← Solo sumar si hay horas registradas
+          const name = task.responsible || "Sin responsable";
+          totals[name] = (totals[name] || 0) + taskHours;
+        }
+      });
+    });
+
+    // Redondear a 2 decimales
+    Object.keys(totals).forEach(key => {
+      totals[key] = totals[key].toFixed(2);
+    });
+
+    return totals;
   };
 
   /**
@@ -335,6 +385,8 @@ export default function KanbanBoard() {
    * ---------------------------------------------------
    */
   return (
+
+    
     <div className="flex flex-col items-center">
       {/* Título del tablero */}
       <div className="flex flex-col items-center mb-6">
@@ -369,13 +421,14 @@ export default function KanbanBoard() {
           Añadir
         </button>
       </div>
-
+      
       {/* 🔹 Línea separadora */}
       <hr className="w-full border-gray-300 my-6" />
 
-      {/* Tablero Kanban separado 30px */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-6 justify-center w-full flex-wrap mt-[30px]">
+          
+          {/* Columnas del tablero */}
           {Object.entries(columns).map(([columnId, column]) => (
             <Droppable key={columnId} droppableId={columnId}>
               {(provided, snapshot) => (
@@ -402,6 +455,31 @@ export default function KanbanBoard() {
               )}
             </Droppable>
           ))}
+
+        {/* Columna de métricas */}
+          <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4">
+            {/* 🔹 Botón de exportar CSV */}
+            <button
+              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+              onClick={() => exportCompletedTasksToCSV(columns)}
+            >
+              Exportar CSV
+            </button>
+
+            {/* Total horas */}
+            <div className="bg-blue-50 p-3 rounded shadow">
+              <p className="font-semibold text-center mb-1">Total Horas Proyecto</p>
+              <p className="text-center text-lg">{totalHours.toFixed(2)} h</p>
+            </div>
+
+            {/* Horas por responsable */}
+            <div className="bg-green-50 p-3 rounded shadow">
+              <p className="font-semibold text-center mb-1">Horas por Responsable</p>
+              {Object.entries(getHoursByResponsible()).map(([name, hours]) => (
+                <p key={name} className="text-center">{name}: {hours} h</p>
+              ))}
+            </div>
+          </div>
         </div>
       </DragDropContext>
       
