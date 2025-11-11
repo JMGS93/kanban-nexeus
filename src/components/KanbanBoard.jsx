@@ -22,6 +22,7 @@ import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { getAllTasks, saveTask, updateTask, removeTask } from "../firestoreTasks";
 import TaskCard from "../components/TaskCard";
 import { exportCompletedTasksToCSV } from "../utils/exportCSV";
+import logo from "../assets/nexeus.png"; // Importa el logo
 
 /**
  * parseDate()
@@ -405,12 +406,12 @@ function Message({ text, onClose, children }) {
   return (
 
     
-    <div className="flex flex-col items-center">
-      {/* Título del tablero */}
-      <div className="flex flex-col items-center mb-6">
-        <h2 className="text-3xl font-bold mb-1 text-center">DataFlow Manager</h2>
-        <p className="text-gray-500 text-sm text-center">Nexeus Project Dashboard</p>
-      </div>
+    <div className="flex flex-col items-center mb-6">
+      <img
+        src={logo} // asegúrate de haber importado: import logo from "../assets/nexeus.png";
+        alt="Nexeus Logo"
+        className="w-64 h-auto mb-4"
+      />
 
       {/* Línea de inputs */}
       <div className="flex flex-col sm:flex-row gap-2 mb-2 items-start">

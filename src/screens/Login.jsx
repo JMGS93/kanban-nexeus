@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import logo from "../assets/nexeus.png"; // Logo importado
+import logo from "../assets/nexeus1.png"; // Logo importado
 
 export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
   const [email, setEmail] = useState("");
@@ -128,7 +128,7 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
             alt="Nexeus Logo"
             style={{
               width: "400px",
-              margin: "0 auto 1.5rem auto",
+              margin: "0 auto",
               display: "block",
             }}
           />

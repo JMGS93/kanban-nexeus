@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import logo from "../assets/nexeus.png";
+import logo from "../assets/nexeus1.png";
 
 export default function Register({ onRegisterSuccess = () => {}, onSwitch = () => {} }) {
   const [email, setEmail] = useState("");
@@ -90,7 +90,7 @@ export default function Register({ onRegisterSuccess = () => {}, onSwitch = () =
             alt="Nexeus Logo"
             style={{
               width: "400px",
-              margin: "0 auto 1.5rem auto",
+              margin: "0 auto",
               display: "block",
             }}
           />
