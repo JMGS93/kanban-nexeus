@@ -67,7 +67,7 @@ function App() {
   // =========================================================
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser && currentUser.emailVerified) {
+      if (currentUser) {
         setUser(currentUser);
         await loadProjects(currentUser.uid);
       } else {
@@ -78,7 +78,6 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
-
   // ---------------------------------------------------------
   // Firestore: cargar proyectos del usuario
   // ---------------------------------------------------------
@@ -177,11 +176,15 @@ function App() {
     }
   };
 
-  const handleRegisterSuccess = () => {
-    setMessage(
-      "✅ Se ha enviado un enlace de verificación a tu correo. Por favor, revisa tu bandeja de entrada antes de iniciar sesión."
-    );
+  const handleRegisterSuccess = (user) => {
+    // Cierra el registro
     setShowRegister(false);
+
+    // Inicia sesión directamente con el usuario recién creado
+    setUser(user);
+
+    // Opcional: mostrar un mensaje de bienvenida
+    setMessage("✅ Registro completado correctamente. ¡Bienvenido!");
   };
 
   const handleLoginSuccess = (u) => {

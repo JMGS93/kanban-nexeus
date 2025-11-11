@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 
 export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
   const [email, setEmail] = useState("");
@@ -14,6 +13,7 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
   const [resetMessage, setResetMessage] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
+  // Iniciar sesión
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -28,30 +28,15 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      await user.reload();
 
-      if (!user.emailVerified) {
-        setError("⚠️ Por favor, verifica tu correo electrónico antes de iniciar sesión.");
-        await auth.signOut();
-        setLoading(false);
-        return;
-      }
-
-      const userDoc = await getDoc(doc(db, "sigma", user.uid));
-      if (!userDoc.exists()) {
-        setError("⚠️ Tu cuenta existe pero no está registrada en la base de datos del proyecto.");
-        await auth.signOut();
-        setLoading(false);
-        return;
-      }
-
+      // 🔹 Login automático sin verificar correo
       onLogin(user);
+
     } catch (err) {
       console.error("Login error:", err);
       switch (err.code) {
         case "auth/user-not-found":
         case "auth/wrong-password":
-        case "auth/invalid-credential":
           setError("Correo electrónico o contraseña incorrectos.");
           break;
         case "auth/invalid-email":
@@ -65,6 +50,7 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     }
   };
 
+  // Recuperar contraseña
   const handlePasswordReset = async (e) => {
     e.preventDefault();
     setResetLoading(true);
