@@ -1,4 +1,3 @@
-// src/utils/exportCSV.js
 export function exportCompletedTasksToCSV(columns) {
   const completedTasks = columns.done.items;
 
@@ -8,7 +7,10 @@ export function exportCompletedTasksToCSV(columns) {
   }
 
   // Encabezados CSV
-  const headers = ["Tarea", " Responsable", " Fecha Creación", " Fecha Cierre", " Horas Registradas"];
+  const headers = ["Tarea", "Responsable", "Fecha Creación", "Fecha Cierre", "Horas Registradas"];
+
+  let grandTotalHours = 0;
+  let grandTotalMinutes = 0;
 
   // Filtrar solo tareas completadas y sumar horas/minutos
   const rows = completedTasks.map(task => {
@@ -24,6 +26,10 @@ export function exportCompletedTasksToCSV(columns) {
     totalHours += Math.floor(totalMinutes / 60);
     totalMinutes = totalMinutes % 60;
 
+    // Sumar al gran total
+    grandTotalHours += totalHours;
+    grandTotalMinutes += totalMinutes;
+
     const totalStr = `${totalHours}h ${totalMinutes}m`;
 
     return [
@@ -34,6 +40,15 @@ export function exportCompletedTasksToCSV(columns) {
       totalStr
     ];
   });
+
+  // Ajustar gran total por minutos sobrantes
+  grandTotalHours += Math.floor(grandTotalMinutes / 60);
+  grandTotalMinutes = grandTotalMinutes % 60;
+
+  // Añadir fila final de totales
+  rows.push([
+    `Horas totales: ${grandTotalHours}h ${grandTotalMinutes}m`,
+  ]);
 
   // Construir CSV
   const csvContent = [
