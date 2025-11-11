@@ -36,7 +36,8 @@ npm install
 ```
 
 3. Configurar Firebase:
-   Copiar el siguiente contenido en un archivo `.env` en la raíz del proyecto (`202509-sigma/.env`):
+Copiar el siguiente contenido en un archivo `.env` en la raíz del proyecto (`kanban-nexeus/.env`):
+
 
 ```env
 # =========================================================
