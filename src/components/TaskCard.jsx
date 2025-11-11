@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Draggable } from "@hello-pangea/dnd";
+import { ChevronDown } from "lucide-react";
 
 export default function TaskCard({
   task,
@@ -25,12 +26,17 @@ export default function TaskCard({
           <div className="flex justify-between items-center">
             <span className="font-semibold">{task.content}</span>
             <div className="flex gap-1 items-center">
-              {/* Triángulo desplegable */}
+              {/* Chevron desplegable */}
               <button
-                className="text-black text-sm"
+                className="text-black"
                 onClick={() => setIsMinimized((prev) => !prev)}
               >
-                {isMinimized ? "▼" : "▲"}
+                <ChevronDown
+                  size={18}
+                  className={`inline-block transform transition-transform duration-200 ${
+                    isMinimized ? "" : "rotate-180"
+                  }`}
+                />
               </button>
 
               {/* Botón de eliminar */}
@@ -55,8 +61,8 @@ export default function TaskCard({
           {!isMinimized && (
             <div className="text-xs text-gray-700 mt-1">
               <p>Responsable: {task.responsible || "-"}</p>
-              <p>Creación: {task.creationDate || "-"}</p>
-              <p>Fecha límite: {task.dueDate || "-"}</p>
+              <p className="text-gray-500">Creación: {task.creationDate || "-"}</p>
+              <p className="text-gray-500">Fecha límite: {task.dueDate || "-"}</p>
 
               {setHoursModal && (
                 <button

@@ -28,7 +28,6 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
       await user.reload();
 
       if (!user.emailVerified) {
@@ -81,7 +80,6 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
       await sendPasswordResetEmail(auth, resetEmail);
       setResetMessage("✅ Se ha enviado un correo para restablecer tu contraseña.");
 
-      // Cerrar modal automáticamente después de 5 segundos
       setTimeout(() => {
         setShowReset(false);
         setResetEmail("");
@@ -109,152 +107,72 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     <>
       <style>{`
         body {
-          background: linear-gradient(135deg, #a8dadc, #457b9d);
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           margin: 0;
           padding: 0;
-          height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        .login-container {
-          background-color: rgba(255, 255, 255, 0.9);
-          width: 380px;
-          padding: 2rem;
-          border-radius: 15px;
-          box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.2);
-          text-align: center;
-        }
-        .login-box h1 {
-          font-size: 2rem;
-          color: #1d3557;
-          margin-bottom: 1.5rem;
-        }
-        form {
-          display: flex;
-          flex-direction: column;
-          gap: 0.8rem;
-          text-align: left;
-        }
-        label {
-          font-weight: 600;
-          color: #1d3557;
-        }
-        input {
-          padding: 0.6rem;
-          border-radius: 8px;
-          border: 1px solid #ccc;
-          outline: none;
-          font-size: 1rem;
-        }
-        input:focus {
-          border-color: #457b9d;
-        }
-        button[type="submit"] {
-          background-color: #1d3557;
-          color: white;
-          padding: 0.7rem;
-          border: none;
-          border-radius: 8px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: background 0.3s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        button[type="submit"]:hover:not(:disabled) {
-          background-color: #457b9d;
-        }
-        button[type="submit"]:disabled {
-          background-color: #cccccc;
-          cursor: not-allowed;
-        }
-        .error-message {
-          color: #e63946;
-          margin-bottom: 10px;
-          font-weight: 600;
-        }
-        .login-link {
-          margin-top: 1.2rem;
-          font-size: 0.95rem;
-        }
-        .link-button {
-          color: #1d3557;
-          text-decoration: none;
-          font-weight: bold;
-          background: none !important;
-          border: none;
-          padding: 0 !important;
-          cursor: pointer;
-          display: inline !important;
-          box-shadow: none !important;
-          transition: none !important;
-        }
-        .link-button:hover {
-          text-decoration: underline;
-          background: none !important;
-        }
-        .button-spinner {
-          width: 16px;
-          height: 16px;
-          border: 2px solid rgba(255, 255, 255, 0.5);
-          border-top-color: #ffffff;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          overflow-x: hidden;
         }
       `}</style>
 
-      <div className="login-container">
-        <div className="login-box">
-          <h1>Iniciar sesión</h1>
-          {error && <p className="error-message">{error}</p>}
+      <div style={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}>
+        <div style={{
+          width: "380px",
+          padding: "2rem",
+          borderRadius: "12px",
+          backgroundColor: "#fff",
+          textAlign: "center",
+        }}>
+          <h1 style={{ marginBottom: "1.5rem", fontSize: "1.8rem" }}>Iniciar sesión</h1>
+          {error && <p style={{ color: "#e63946", fontWeight: 600 }}>{error}</p>}
 
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="email">Correo electrónico</label>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
             <input
               type="email"
-              id="email"
-              placeholder="Email"
+              placeholder="Correo electrónico"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              style={{ padding: "0.6rem", borderRadius: "6px", border: "1px solid #ccc" }}
             />
-
-            <label htmlFor="password">Contraseña</label>
             <input
               type="password"
-              id="password"
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              style={{ padding: "0.6rem", borderRadius: "6px", border: "1px solid #ccc" }}
             />
-
-            <button type="submit" disabled={loading}>
-              {loading && <span className="button-spinner" />}
-              <span className="ml-2">{loading ? "Iniciando..." : "Iniciar Sesión"}</span>
+            <button type="submit" disabled={loading} style={{
+              padding: "0.7rem",
+              borderRadius: "6px",
+              border: "none",
+              backgroundColor: "#1d3557",
+              color: "#fff",
+              fontWeight: "bold",
+              cursor: loading ? "not-allowed" : "pointer"
+            }}>
+              {loading ? "Iniciando..." : "Iniciar Sesión"}
             </button>
           </form>
 
-          <p className="login-link">
+          <p style={{ marginTop: "1rem" }}>
             ¿Olvidaste tu contraseña?{" "}
-            <button type="button" className="link-button" onClick={() => setShowReset(true)}>
+            <button type="button" style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }} onClick={() => setShowReset(true)}>
               Recuperar
             </button>
           </p>
 
-          <p className="login-link">
+          <p style={{ marginTop: "0.5rem" }}>
             ¿No tienes cuenta?{" "}
-            <button type="button" onClick={onSwitch} className="link-button">
+            <button type="button" style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }} onClick={onSwitch}>
               Regístrate
             </button>
           </p>
@@ -262,28 +180,32 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
       </div>
 
       {showReset && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: "#fff",
-            padding: "2rem",
-            borderRadius: "12px",
-            width: "350px",
-            textAlign: "center",
-            position: "relative"
-          }}>
-            <h2>Recuperar contraseña</h2>
-
+        <div
+          onClick={() => setShowReset(false)} // clic en el fondo cierra el modal
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()} // evita que el clic dentro del modal lo cierre
+            style={{
+              width: "350px",
+              backgroundColor: "#fff",
+              padding: "2rem",
+              borderRadius: "12px",
+              textAlign: "center",
+            }}
+          >
+            <h2 style={{ marginBottom: "1rem" }}>Recuperar contraseña</h2>
             <input
               type="email"
               placeholder="Ingresa tu correo"
@@ -293,30 +215,28 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
               style={{
                 width: "100%",
                 padding: "0.6rem",
-                margin: "1rem 0",
-                borderRadius: "8px",
-                border: "1px solid #ccc"
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                marginBottom: "1rem",
               }}
             />
-
             {resetMessage && (
               <p style={{ color: resetMessage.includes("✅") ? "green" : "red", marginBottom: "1rem" }}>
                 {resetMessage}
               </p>
             )}
-
             <button
               onClick={handlePasswordReset}
               disabled={resetLoading}
               style={{
+                width: "100%",
+                padding: "0.7rem",
+                borderRadius: "6px",
+                border: "none",
                 backgroundColor: "#1d3557",
                 color: "#fff",
-                padding: "0.7rem",
-                borderRadius: "8px",
-                width: "100%",
                 fontWeight: "bold",
-                cursor: "pointer",
-                marginBottom: "0.5rem"
+                cursor: resetLoading ? "not-allowed" : "pointer",
               }}
             >
               {resetLoading ? "Enviando..." : "Enviar correo"}

@@ -1,9 +1,3 @@
-// src/screens/Register.jsx
-// -------------------------------------------------------------
-// ✅ Este componente gestiona el registro de nuevos usuarios
-// con verificación por correo electrónico antes de activar la cuenta.
-// -------------------------------------------------------------
-
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
@@ -36,23 +30,19 @@ export default function Register({ onRegister = () => {}, onSwitch = () => {} })
     }
 
     try {
-      // 🔹 Crear el usuario en Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 🔹 Guardar en Firestore
       await setDoc(doc(db, "sigma", user.uid), {
         email: user.email,
         createdAt: new Date().toISOString(),
       });
 
-      // 🔹 Enviar correo de verificación
       await sendEmailVerification(user, {
-        url: "https://kanban-nexeus.web.app/login", // ✅ dominio autorizado
+        url: "https://kanban-nexeus.web.app/login",
         handleCodeInApp: true,
       });
 
-      // 🔹 Cerrar sesión para impedir acceso sin verificar
       await auth.signOut();
 
       setMessage("✅ Se ha enviado un enlace de verificación a tu correo. Por favor, revisa tu bandeja de entrada antes de iniciar sesión.");
@@ -77,171 +67,77 @@ export default function Register({ onRegister = () => {}, onSwitch = () => {} })
   };
 
   return (
-    <>
-      <style>{`
-        body {
-          background: linear-gradient(135deg, #a8dadc, #457b9d);
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          margin: 0;
-          padding: 0;
-          height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        .login-container {
-          background-color: rgba(255, 255, 255, 0.9);
-          width: 380px;
-          padding: 2rem;
-          border-radius: 15px;
-          box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.2);
-          text-align: center;
-        }
-        .login-box h1 {
-          font-size: 2rem;
-          color: #1d3557;
-          margin-bottom: 1.5rem;
-        }
-        form {
-          display: flex;
-          flex-direction: column;
-          gap: 0.8rem;
-          text-align: left;
-        }
-        label {
-          font-weight: 600;
-          color: #1d3557;
-        }
-        input {
-          padding: 0.6rem;
-          border-radius: 8px;
-          border: 1px solid #ccc;
-          outline: none;
-          font-size: 1rem;
-        }
-        input:focus {
-          border-color: #457b9d;
-        }
-        button[type="submit"] {
-          background-color: #1d3557;
-          color: white;
-          padding: 0.7rem;
-          border: none;
-          border-radius: 8px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: background 0.3s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        button[type="submit"]:hover:not(:disabled) {
-          background-color: #457b9d;
-        }
-        button[type="submit"]:disabled {
-          background-color: #cccccc;
-          cursor: not-allowed;
-        }
-        .error-message {
-          color: #e63946;
-          margin-bottom: 10px;
-          font-weight: 600;
-        }
-        .success-message {
-          color: #2a9d8f;
-          margin-bottom: 10px;
-          font-weight: 600;
-        }
-        .login-link {
-          margin-top: 1.2rem;
-          font-size: 0.95rem;
-        }
-        .link-button {
-          color: #1d3557;
-          text-decoration: none;
-          font-weight: bold;
-          background: none !important;
-          border: none;
-          padding: 0 !important;
-          cursor: pointer;
-          display: inline !important;
-          box-shadow: none !important;
-          transition: none !important;
-        }
-        .link-button:hover {
-          text-decoration: underline;
-          background: none !important;
-        }
-        .button-spinner {
-          width: 16px;
-          height: 16px;
-          border: 2px solid rgba(255, 255, 255, 0.5);
-          border-top-color: #ffffff;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+    <div style={{
+      width: "100%",
+      height: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      margin: 0,
+      padding: 0,
+      overflowX: "hidden",
+      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+    }}>
+      <div style={{
+        width: "380px",
+        padding: "2rem",
+        borderRadius: "12px",
+        backgroundColor: "#fff",
+        textAlign: "center"
+      }}>
+        <h1 style={{ marginBottom: "1.5rem", fontSize: "1.8rem" }}>Registrar usuario</h1>
 
-      <div className="login-container">
-        <div className="login-box">
-          <h1>Registrar usuario</h1>
+        {message && <p style={{ color: "#2a9d8f", fontWeight: "600" }}>{message}</p>}
+        {error && <p style={{ color: "#e63946", fontWeight: "600" }}>{error}</p>}
 
-          {message && <p className="success-message">{message}</p>}
-          {error && <p className="error-message">{error}</p>}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+          <input
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+            style={{ padding: "0.6rem", borderRadius: "6px", border: "1px solid #ccc" }}
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+            style={{ padding: "0.6rem", borderRadius: "6px", border: "1px solid #ccc" }}
+          />
+          <input
+            type="password"
+            placeholder="Repite tu contraseña"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            disabled={loading}
+            style={{ padding: "0.6rem", borderRadius: "6px", border: "1px solid #ccc" }}
+          />
+          <button type="submit" disabled={loading} style={{
+            padding: "0.7rem",
+            borderRadius: "6px",
+            border: "none",
+            backgroundColor: "#1d3557",
+            color: "#fff",
+            fontWeight: "bold",
+            cursor: loading ? "not-allowed" : "pointer"
+          }}>
+            {loading ? "Registrando..." : "Regístrate"}
+          </button>
+        </form>
 
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-
-            <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-
-            <label htmlFor="confirmPassword">Confirmar contraseña</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              placeholder="Repite tu contraseña"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-
-            <button type="submit" disabled={loading}>
-              {loading && <span className="button-spinner" />}
-              <span className="ml-2">{loading ? "Registrando..." : "Regístrate"}</span>
-            </button>
-          </form>
-
-          <p className="login-link">
-            ¿Ya tienes cuenta?{" "}
-            <button type="button" onClick={onSwitch} className="link-button">
-              Inicia sesión
-            </button>
-          </p>
-        </div>
+        <p style={{ marginTop: "1rem" }}>
+          ¿Ya tienes cuenta?{" "}
+          <button type="button" style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }} onClick={onSwitch}>
+            Inicia sesión
+          </button>
+        </p>
       </div>
-    </>
+    </div>
   );
 }

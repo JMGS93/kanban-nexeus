@@ -59,198 +59,206 @@ function Message({ text, onClose, children }) {
   );
 }
 
-/**
- * Componente principal del tablero Kanban
- * =======================================
- */
-export default function KanbanBoard() {
   /**
-   * Estado general del tablero:
-   * Cada columna contiene un array de tareas.
+   * Componente principal del tablero Kanban
+   * =======================================
    */
-  const [columns, setColumns] = useState({
-    todo: { name: "Por hacer", items: [] },
-    inProgress: { name: "En progreso", items: [] },
-    done: { name: "Completado", items: [] },
-  });
+  export default function KanbanBoard({ activeProject }) {
+    const [columns, setColumns] = useState({
+      todo: { name: "Por hacer", items: [] },
+      inProgress: { name: "En progreso", items: [] },
+      done: { name: "Completado", items: [] },
+    });
 
-  // Campos controlados para crear nueva tarea
-  const [newTask, setNewTask] = useState("");
-  const [newResponsible, setNewResponsible] = useState("");
-  const [newCreationDate, setNewCreationDate] = useState("");
-  const [newDeadline, setNewDeadline] = useState("");
-  const [targetColumn, setTargetColumn] = useState("todo");
+    const [newTask, setNewTask] = useState("");
+    const [newResponsible, setNewResponsible] = useState("");
+    const [newCreationDate, setNewCreationDate] = useState("");
+    const [newDeadline, setNewDeadline] = useState("");
+    const [targetColumn, setTargetColumn] = useState("todo");
 
-  // Estado de modales (confirmaciones, advertencias, registro de horas)
-  const [confirmDeleteTask, setConfirmDeleteTask] = useState(null);
-  const [totalHours, setTotalHours] = useState(0);
-  const [hoursModal, setHoursModal] = useState(null);
-  const [warningModal, setWarningModal] = useState(null);
+    const [confirmDeleteTask, setConfirmDeleteTask] = useState(null);
+    const [totalHours, setTotalHours] = useState(0);
+    const [hoursModal, setHoursModal] = useState(null);
+    const [warningModal, setWarningModal] = useState(null);
 
-  /**
-   * useEffect: carga inicial de tareas desde Firestore.
-   * --------------------------------------------------
-   * - Se ejecuta al montar el componente.
-   * - Llama a getAllTasks() para traer todas las tareas guardadas.
-   * - Clasifica las tareas según su estado (status) y las inserta en las columnas correspondientes.
-   */
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const tasks = await getAllTasks();
-        console.log("Tasks from Firestore:", tasks);
+    // ============================================================
+    // 🔹 Cargar tareas del proyecto activo
+    // ============================================================
+    useEffect(() => {
+      async function fetchData() {
+        if (!activeProject?.id) {
+          // Si no hay proyecto activo, limpiar tablero
+          setColumns({
+            todo: { name: "Por hacer", items: [] },
+            inProgress: { name: "En progreso", items: [] },
+            done: { name: "Completado", items: [] },
+          });
+          setTotalHours(0);
+          return;
+        }
 
-        // Reorganizar tareas según columna (estado)
-        const newCols = {
-          todo: { name: "Por hacer", items: [] },
-          inProgress: { name: "En progreso", items: [] },
-          done: { name: "Completado", items: [] },
-        };
+        try {
+          const tasks = await getAllTasks(activeProject.id);
+          console.log(`Tareas cargadas del proyecto ${activeProject.name}:`, tasks);
 
-        // Variable para acumular horas de todas las tareas
-        let accumulatedHours = 0;
+          const newCols = {
+            todo: { name: "Por hacer", items: [] },
+            inProgress: { name: "En progreso", items: [] },
+            done: { name: "Completado", items: [] },
+          };
 
-        tasks?.forEach((t) => {
-          const colKey = t.status || "todo";
-          if (newCols[colKey]) {
-            newCols[colKey].items.push({
-              ...t,
-              timesheet: t.timesheet || [], // Garantizar array de horas
-              id: String(t.id),
-            });
-          }
+          let accumulatedHours = 0;
 
-          // Sumar horas de la tarea
-          accumulatedHours += t.timesheet?.reduce(
-            (sum, entry) => sum + entry.hours + (entry.minutes || 0) / 60,
-            0
-          ) || 0;
-        });
+          tasks?.forEach((t) => {
+            const colKey = t.status || "todo";
+            if (newCols[colKey]) {
+              newCols[colKey].items.push({
+                ...t,
+                timesheet: t.timesheet || [],
+                id: String(t.id),
+              });
+            }
 
-        setColumns(newCols);
-        setTotalHours(accumulatedHours); // Inicializar total histórico
-      } catch (err) {
-        console.error("Error cargando tareas:", err);
+            accumulatedHours +=
+              t.timesheet?.reduce(
+                (sum, entry) => sum + entry.hours + (entry.minutes || 0) / 60,
+                0
+              ) || 0;
+          });
+
+          setColumns(newCols);
+          setTotalHours(accumulatedHours);
+        } catch (err) {
+          console.error("Error cargando tareas:", err);
+          setWarningModal({
+            text: "No se pudieron cargar las tareas del proyecto.",
+            onClose: () => setWarningModal(null),
+          });
+        }
+      }
+
+      fetchData();
+    }, [activeProject]);
+
+    // ============================================================
+    // 🔹 Añadir nueva tarea vinculada al proyecto actual
+    // ============================================================
+    const addTask = async () => {
+      if (!newTask.trim()) return;
+
+      if (!activeProject?.id) {
         setWarningModal({
-          text: "No se pudieron cargar las tareas. Comprueba tu conexión o permisos.",
+          text: "Crea o selecciona un proyecto antes de empezar a añadir tareas.",
+          onClose: () => setWarningModal(null),
+        });
+        return;
+      }
+
+      // Validar fechas
+      if (!newCreationDate || isNaN(new Date(newCreationDate).getTime())) {
+        setWarningModal({
+          text: "Fecha de creación inválida.",
+          onClose: () => setWarningModal(null),
+        });
+        return;
+      }
+
+      const creationDateObj = new Date(newCreationDate);
+      creationDateObj.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (creationDateObj > today) {
+        setWarningModal({
+          text: "La fecha de creación no puede ser futura.",
+          onClose: () => setWarningModal(null),
+        });
+        return;
+      }
+
+      const newItem = {
+        content: newTask,
+        responsible: newResponsible,
+        creationDate: newCreationDate,
+        dueDate: newDeadline,
+        timesheet: [],
+        status: targetColumn,
+        projectId: activeProject.id, // 🔹 Asociar al proyecto
+      };
+
+      try {
+        const saved = await saveTask(newItem);
+        setColumns((prev) => ({
+          ...prev,
+          [targetColumn]: {
+            ...prev[targetColumn],
+            items: [
+              ...prev[targetColumn].items,
+              { ...saved, timesheet: saved.timesheet || [], id: String(saved.id) },
+            ],
+          },
+        }));
+
+        setNewTask("");
+        setNewResponsible("");
+        setNewCreationDate("");
+        setNewDeadline("");
+      } catch (error) {
+        console.error("Error añadiendo tarea:", error);
+        setWarningModal({
+          text: `Error añadiendo tarea: ${error.message || error}`,
           onClose: () => setWarningModal(null),
         });
       }
-    }
-    fetchData();
-  }, []);
+    };
 
+    // ============================================================
+    // 🔹 Movimiento de tareas entre columnas
+    // ============================================================
+    const onDragEnd = (result) => {
+      if (!result.destination) return;
+      const { source, destination } = result;
 
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
+      // Movimiento dentro de la misma columna
+      if (source.droppableId === destination.droppableId) {
+        const column = columns[source.droppableId];
+        const newItems = Array.from(column.items);
+        const [movedItem] = newItems.splice(source.index, 1);
+        newItems.splice(destination.index, 0, movedItem);
 
-    // Movimiento dentro de la misma columna
-    if (source.droppableId === destination.droppableId) {
-      const column = columns[source.droppableId];
-      const newItems = Array.from(column.items);
-      const [movedItem] = newItems.splice(source.index, 1);
-      newItems.splice(destination.index, 0, movedItem);
+        setColumns({
+          ...columns,
+          [source.droppableId]: { ...column, items: newItems },
+        });
+        return;
+      }
+
+      // Movimiento entre columnas diferentes
+      const sourceColumn = columns[source.droppableId];
+      const destColumn = columns[destination.droppableId];
+      const sourceItems = Array.from(sourceColumn.items);
+      const destItems = Array.from(destColumn.items);
+      const [movedItem] = sourceItems.splice(source.index, 1);
+
+      if (destination.droppableId === "done" && !movedItem.completedDate) {
+        movedItem.completedDate = new Date().toISOString().split("T")[0];
+      }
+
+      destItems.splice(destination.index, 0, movedItem);
 
       setColumns({
         ...columns,
-        [source.droppableId]: { ...column, items: newItems },
+        [source.droppableId]: { ...sourceColumn, items: sourceItems },
+        [destination.droppableId]: { ...destColumn, items: destItems },
       });
 
-      return;
-    }
+      const updateData = { status: destination.droppableId };
+      if (movedItem.completedDate) updateData.completedDate = movedItem.completedDate;
 
-    // Movimiento entre columnas diferentes
-    const sourceColumn = columns[source.droppableId];
-    const destColumn = columns[destination.droppableId];
-    const sourceItems = Array.from(sourceColumn.items);
-    const destItems = Array.from(destColumn.items);
-    const [movedItem] = sourceItems.splice(source.index, 1);
-
-    // 🔹 Si se mueve a "done", registrar fecha de cierre
-    if (destination.droppableId === "done" && !movedItem.completedDate) {
-      movedItem.completedDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    }
-
-    destItems.splice(destination.index, 0, movedItem);
-
-    // Actualizar estado local
-    setColumns({
-      ...columns,
-      [source.droppableId]: { ...sourceColumn, items: sourceItems },
-      [destination.droppableId]: { ...destColumn, items: destItems },
-    });
-
-    // Actualizar Firestore
-    const updateData = { status: destination.droppableId };
-    if (movedItem.completedDate) updateData.completedDate = movedItem.completedDate;
-
-    updateTask(movedItem.id, updateData).catch((err) => {
-      console.error("Error actualizando tarea en Firestore:", err);
-    });
-  };
-
-  /**
-   * addTask()
-   * ---------------------------------------------------
-   * Crea una nueva tarea, valida fechas y la guarda en Firestore.
-   */
-  const addTask = async () => {
-    if (!newTask.trim()) return;
-
-    // Validación de fecha de creación
-    if (!newCreationDate || isNaN(new Date(newCreationDate).getTime())) {
-      setWarningModal({ text: "Fecha de creación inválida.", onClose: () => setWarningModal(null) });
-      return;
-    }
-
-    const creationDateObj = new Date(newCreationDate);
-    creationDateObj.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // No permitir fechas futuras
-    if (creationDateObj > today) {
-      setWarningModal({
-        text: "La fecha de creación no puede ser futura.",
-        onClose: () => setWarningModal(null),
+      updateTask(movedItem.id, updateData).catch((err) => {
+        console.error("Error actualizando tarea:", err);
       });
-      return;
-    }
-
-    const newItem = {
-      content: newTask,
-      responsible: newResponsible,
-      creationDate: newCreationDate,
-      dueDate: newDeadline,
-      timesheet: [],
-      status: targetColumn,
     };
-
-    try {
-      const saved = await saveTask(newItem);
-      setColumns((prev) => ({
-        ...prev,
-        [targetColumn]: {
-          ...prev[targetColumn],
-          items: [...prev[targetColumn].items, { ...saved, timesheet: saved.timesheet || [], id: String(saved.id) }],
-        },
-      }));
-
-      // Limpiar campos
-      setNewTask("");
-      setNewResponsible("");
-      setNewCreationDate("");
-      setNewDeadline("");
-    } catch (error) {
-      console.error("Error añadiendo tarea:", error);
-      setWarningModal({
-        text: `Error añadiendo tarea: ${error.message || error}`,
-        onClose: () => setWarningModal(null),
-      });
-    }
-  };
-
+  
   /**
    * addHoursToTask()
    * ---------------------------------------------------
@@ -399,17 +407,27 @@ export default function KanbanBoard() {
         <input type="text" className="border p-2 rounded w-48" placeholder="Nueva tarea..." value={newTask} onChange={(e) => setNewTask(e.target.value)} />
         <input type="text" className="border p-2 rounded w-36" placeholder="Responsable..." value={newResponsible} onChange={(e) => setNewResponsible(e.target.value)} />
 
-        {/* Fecha creación */}
-        <div className="flex flex-col items-center gap-1 w-36">
-          <input type="date" className="border p-2 rounded w-full" value={newCreationDate} onChange={(e) => setNewCreationDate(e.target.value)} />
-          <span className="text-xs italic text-center">Fecha creación</span>
-        </div>
+      {/* Fecha creación */}
+      <div className="flex flex-col items-center gap-1 w-36">
+        <input
+          type="date"
+          className="border p-2 rounded w-full"
+          value={newCreationDate}
+          onChange={(e) => setNewCreationDate(e.target.value)}
+        />
+        <span className="text-xs italic text-center text-gray-500">Fecha creación</span>
+      </div>
 
-        {/* Fecha límite */}
-        <div className="flex flex-col items-center gap-1 w-36">
-          <input type="date" className="border p-2 rounded w-full" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} />
-          <span className="text-xs italic text-center">Fecha límite</span>
-        </div>
+      {/* Fecha límite */}
+      <div className="flex flex-col items-center gap-1 w-36">
+        <input
+          type="date"
+          className="border p-2 rounded w-full"
+          value={newDeadline}
+          onChange={(e) => setNewDeadline(e.target.value)}
+        />
+        <span className="text-xs italic text-center text-gray-500">Fecha límite</span>
+      </div>
 
         <select className="border p-2 rounded w-36" value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)}>
           {Object.entries(columns).map(([id, col]) => (
@@ -417,7 +435,7 @@ export default function KanbanBoard() {
           ))}
         </select>
 
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={addTask}>
+        <button className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600" onClick={addTask}>
           Añadir
         </button>
       </div>
@@ -427,6 +445,8 @@ export default function KanbanBoard() {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-6 justify-center w-full flex-wrap mt-[30px]">
+          
+
           
           {/* Columnas del tablero */}
           {Object.entries(columns).map(([columnId, column]) => (
@@ -456,11 +476,13 @@ export default function KanbanBoard() {
             </Droppable>
           ))}
 
+          
+
         {/* Columna de métricas */}
           <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4">
             {/* 🔹 Botón de exportar CSV */}
             <button
-              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600"
               onClick={() => exportCompletedTasksToCSV(columns)}
             >
               Exportar CSV
@@ -469,14 +491,14 @@ export default function KanbanBoard() {
             {/* Total horas */}
             <div className="bg-blue-50 p-3 rounded shadow">
               <p className="font-semibold text-center mb-1">Total Horas Proyecto</p>
-              <p className="text-center text-lg">{totalHours.toFixed(2)} h</p>
+              <p className="text-center text-lg">{totalHours.toFixed(2)}h</p>
             </div>
 
             {/* Horas por responsable */}
             <div className="bg-green-50 p-3 rounded shadow">
               <p className="font-semibold text-center mb-1">Horas por Responsable</p>
               {Object.entries(getHoursByResponsible()).map(([name, hours]) => (
-                <p key={name} className="text-center">{name}: {hours} h</p>
+                <p key={name} className="text-center">{name}: {hours}h</p>
               ))}
             </div>
           </div>
@@ -524,7 +546,7 @@ export default function KanbanBoard() {
 
             <input type="text" value={hoursModal.note} onChange={(e) => setHoursModal((prev) => ({ ...prev, note: e.target.value }))} placeholder="Nota (opcional)" className="border p-2 rounded w-full mb-2" />
 
-            <button className="bg-green-500 text-white px-4 py-2 rounded w-full mt-2" onClick={addHoursToTask}>
+            <button className="bg-gray-800 text-white px-4 py-2 rounded w-full mt-2 hover:bg-purple-600" onClick={addHoursToTask}>
               Guardar
             </button>
           </div>

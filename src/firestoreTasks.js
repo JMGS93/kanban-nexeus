@@ -1,37 +1,54 @@
 // =========================================================
-// Módulo de operaciones con Firestore
+// Módulo de operaciones con Firestore (multi-proyecto)
 // ---------------------------------------------------------
 // Este archivo centraliza las funciones CRUD (Crear, Leer,
 // Actualizar, Borrar) para la colección "tasks" en Firestore.
+// Ahora cada tarea pertenece a un proyecto (projectId).
 // =========================================================
 
-import { db } from "./firebase"; 
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { db } from "./firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 
 // =========================================================
-// Obtener todas las tareas
+// Obtener todas las tareas de un proyecto
 // ---------------------------------------------------------
-// Devuelve un array de objetos con la información de cada
-// tarea en la colección "tasks", incluyendo su ID.
+// Devuelve un array con las tareas que pertenecen al
+// 'projectId' indicado. Si no se pasa, retorna vacío.
 // =========================================================
-export async function getAllTasks() {
-  const querySnapshot = await getDocs(collection(db, "tasks"));
-  return querySnapshot.docs.map(docSnap => ({
-    id: docSnap.id,    // ID del documento en Firestore
-    ...docSnap.data()   // Resto de datos de la tarea
+export async function getAllTasks(projectId) {
+  if (!projectId) return [];
+
+  const q = query(collection(db, "tasks"), where("projectId", "==", projectId));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id, // ID del documento en Firestore
+    ...docSnap.data(),
   }));
 }
 
 // =========================================================
-// Guardar una nueva tarea
+// Guardar una nueva tarea (asociada al proyecto activo)
 // ---------------------------------------------------------
-// Recibe un objeto 'task' con los campos de la tarea y lo
-// añade a la colección "tasks".
-// Retorna el objeto guardado incluyendo el ID generado.
+// Recibe un objeto 'task' con todos los campos, incluyendo
+// el 'projectId' que indica a qué proyecto pertenece.
 // =========================================================
 export async function saveTask(task) {
+  if (!task.projectId) {
+    throw new Error("No se puede guardar una tarea sin projectId.");
+  }
+
   const docRef = await addDoc(collection(db, "tasks"), task);
-  return { id: docRef.id, ...task }; // 🔹 importante devolver id
+  return { id: docRef.id, ...task };
 }
 
 // =========================================================
