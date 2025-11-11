@@ -62,11 +62,11 @@ npm run dev
 ## Estructura principal del proyecto
 
 ```text
-202509-sigma/
+KANBAN-NEXEUS/
 ├─ public/
 ├─ src/
-│  ├─ components/       # Componentes React (TaskCard, Column, Modals)
-│  ├─ screens/          # Pantallas principales (KanbanBoard, Login)
+│  ├─ components/       # Componentes React (Column, formWrapper, KanbanBoard, Register, TaskCard)
+│  ├─ screens/          # Pantalla principal (Login)
 │  ├─ firestoreTasks.js # Funciones CRUD con Firestore
 │  ├─ App.jsx           # Componente principal
 │  └─ main.jsx          # Punto de entrada

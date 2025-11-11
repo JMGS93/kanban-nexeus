@@ -184,7 +184,7 @@ function App() {
     setUser(user);
 
     // Opcional: mostrar un mensaje de bienvenida
-    setMessage("✅ Registro completado correctamente. ¡Bienvenido!");
+    setMessage("✅ Registro completado correctamente. ¡Bienvenido!\n\nPara empezar, crea un proyecto nuevo.");
   };
 
   const handleLoginSuccess = (u) => {

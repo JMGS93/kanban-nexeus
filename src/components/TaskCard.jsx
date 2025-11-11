@@ -64,6 +64,13 @@ export default function TaskCard({
               <p className="text-gray-500">Creación: {task.creationDate || "-"}</p>
               <p className="text-gray-500">Fecha límite: {task.dueDate || "-"}</p>
 
+              {/* 🔹 Nueva línea: mostrar fecha de cierre si la tarea está completada */}
+              {columnId === "done" && (
+                <p className="text-gray-500">
+                  Fecha de cierre: {task.completedDate || "-"}
+                </p>
+              )}
+
               {setHoursModal && (
                 <button
                   className="text-green-600 hover:text-green-800 text-xs mb-1 mt-1"

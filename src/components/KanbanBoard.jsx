@@ -211,53 +211,63 @@ function Message({ text, onClose, children }) {
       }
     };
 
-    // ============================================================
-    // 🔹 Movimiento de tareas entre columnas
-    // ============================================================
-    const onDragEnd = (result) => {
-      if (!result.destination) return;
-      const { source, destination } = result;
+  // ============================================================
+  // 🔹 Movimiento de tareas entre columnas (con fecha de cierre)
+  // ============================================================
+  const onDragEnd = async (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
 
-      // Movimiento dentro de la misma columna
-      if (source.droppableId === destination.droppableId) {
-        const column = columns[source.droppableId];
-        const newItems = Array.from(column.items);
-        const [movedItem] = newItems.splice(source.index, 1);
-        newItems.splice(destination.index, 0, movedItem);
-
-        setColumns({
-          ...columns,
-          [source.droppableId]: { ...column, items: newItems },
-        });
-        return;
-      }
-
-      // Movimiento entre columnas diferentes
-      const sourceColumn = columns[source.droppableId];
-      const destColumn = columns[destination.droppableId];
-      const sourceItems = Array.from(sourceColumn.items);
-      const destItems = Array.from(destColumn.items);
-      const [movedItem] = sourceItems.splice(source.index, 1);
-
-      if (destination.droppableId === "done" && !movedItem.completedDate) {
-        movedItem.completedDate = new Date().toISOString().split("T")[0];
-      }
-
-      destItems.splice(destination.index, 0, movedItem);
+    // 🔸 Movimiento dentro de la misma columna
+    if (source.droppableId === destination.droppableId) {
+      const column = columns[source.droppableId];
+      const newItems = Array.from(column.items);
+      const [movedItem] = newItems.splice(source.index, 1);
+      newItems.splice(destination.index, 0, movedItem);
 
       setColumns({
         ...columns,
-        [source.droppableId]: { ...sourceColumn, items: sourceItems },
-        [destination.droppableId]: { ...destColumn, items: destItems },
+        [source.droppableId]: { ...column, items: newItems },
       });
+      return;
+    }
 
-      const updateData = { status: destination.droppableId };
-      if (movedItem.completedDate) updateData.completedDate = movedItem.completedDate;
+    // 🔸 Movimiento entre columnas diferentes
+    const sourceColumn = columns[source.droppableId];
+    const destColumn = columns[destination.droppableId];
+    const sourceItems = Array.from(sourceColumn.items);
+    const destItems = Array.from(destColumn.items);
+    const [movedItem] = sourceItems.splice(source.index, 1);
 
-      updateTask(movedItem.id, updateData).catch((err) => {
-        console.error("Error actualizando tarea:", err);
-      });
-    };
+    // 🔹 Si se mueve a "done" → asignar fecha de cierre
+    if (destination.droppableId === "done" && !movedItem.completedDate) {
+      movedItem.completedDate = new Date().toISOString().split("T")[0];
+    }
+
+    // 🔹 Si se mueve fuera de "done" → eliminar fecha de cierre
+    if (source.droppableId === "done" && destination.droppableId !== "done") {
+      movedItem.completedDate = null;
+    }
+
+    destItems.splice(destination.index, 0, movedItem);
+
+    setColumns({
+      ...columns,
+      [source.droppableId]: { ...sourceColumn, items: sourceItems },
+      [destination.droppableId]: { ...destColumn, items: destItems },
+    });
+
+    // 🔹 Actualizar Firestore
+    const updateData = { status: destination.droppableId };
+    updateData.completedDate = movedItem.completedDate || null;
+
+    try {
+      await updateTask(movedItem.id, updateData);
+    } catch (err) {
+      console.error("Error actualizando tarea:", err);
+    }
+  };
+
   
   /**
    * addHoursToTask()

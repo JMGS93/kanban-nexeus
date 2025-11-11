@@ -7,7 +7,7 @@ export function exportCompletedTasksToCSV(columns) {
   }
 
   // Encabezados CSV
-  const headers = ["Tarea", "Responsable", "Fecha Creación", "Fecha Cierre", "Horas Registradas"];
+  const headers = ["Tarea", " Responsable", " Fecha Creación", " Fecha Cierre", " Horas Registradas"];
 
   let grandTotalHours = 0;
   let grandTotalMinutes = 0;
