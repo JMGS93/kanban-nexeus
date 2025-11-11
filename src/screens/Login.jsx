@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import logo from "../assets/nexeus.png"; // Logo importado
 
 export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
   const [email, setEmail] = useState("");
@@ -13,7 +15,6 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
   const [resetMessage, setResetMessage] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
-  // Iniciar sesión
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -28,15 +29,23 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      await user.reload();
 
-      // 🔹 Login automático sin verificar correo
+      const userDoc = await getDoc(doc(db, "sigma", user.uid));
+      if (!userDoc.exists()) {
+        setError("⚠️ Tu cuenta existe pero no está registrada en la base de datos del proyecto.");
+        await auth.signOut();
+        setLoading(false);
+        return;
+      }
+
       onLogin(user);
-
     } catch (err) {
       console.error("Login error:", err);
       switch (err.code) {
         case "auth/user-not-found":
         case "auth/wrong-password":
+        case "auth/invalid-credential":
           setError("Correo electrónico o contraseña incorrectos.");
           break;
         case "auth/invalid-email":
@@ -50,7 +59,6 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     }
   };
 
-  // Recuperar contraseña
   const handlePasswordReset = async (e) => {
     e.preventDefault();
     setResetLoading(true);
@@ -71,7 +79,6 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
         setResetEmail("");
         setResetMessage("");
       }, 3000);
-
     } catch (err) {
       console.error("Reset error:", err);
       switch (err.code) {
@@ -106,6 +113,7 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: "#f0f2f5",
       }}>
         <div style={{
           width: "380px",
@@ -114,7 +122,19 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
           backgroundColor: "#fff",
           textAlign: "center",
         }}>
+          {/* Logo arriba */}
+          <img
+            src={logo}
+            alt="Nexeus Logo"
+            style={{
+              width: "400px",
+              margin: "0 auto 1.5rem auto",
+              display: "block",
+            }}
+          />
+
           <h1 style={{ marginBottom: "1.5rem", fontSize: "1.8rem" }}>Iniciar sesión</h1>
+
           {error && <p style={{ color: "#e63946", fontWeight: 600 }}>{error}</p>}
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
@@ -151,23 +171,32 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
 
           <p style={{ marginTop: "1rem" }}>
             ¿Olvidaste tu contraseña?{" "}
-            <button type="button" style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }} onClick={() => setShowReset(true)}>
+            <button
+              type="button"
+              style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }}
+              onClick={() => setShowReset(true)}
+            >
               Recuperar
             </button>
           </p>
 
           <p style={{ marginTop: "0.5rem" }}>
             ¿No tienes cuenta?{" "}
-            <button type="button" style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }} onClick={onSwitch}>
+            <button
+              type="button"
+              style={{ background: "none", border: "none", color: "#1d3557", fontWeight: "bold", cursor: "pointer" }}
+              onClick={onSwitch}
+            >
               Regístrate
             </button>
           </p>
         </div>
       </div>
 
+      {/* Modal de recuperación de contraseña */}
       {showReset && (
         <div
-          onClick={() => setShowReset(false)} // clic en el fondo cierra el modal
+          onClick={() => setShowReset(false)}
           style={{
             position: "fixed",
             top: 0,
@@ -182,7 +211,7 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()} // evita que el clic dentro del modal lo cierre
+            onClick={(e) => e.stopPropagation()}
             style={{
               width: "350px",
               backgroundColor: "#fff",
