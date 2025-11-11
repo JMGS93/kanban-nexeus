@@ -1,29 +1,32 @@
-# KANBAN-NEXEUS
+# 🧠 KANBAN-NEXEUS
 
-Tablero Kanban avanzado construido con **React** y **Vite**, con soporte para:
+Tablero **Kanban avanzado** construido con **React** y **Vite**, diseñado para la gestión de proyectos de forma visual, ágil y colaborativa.
 
-* Creación, edición y eliminación de tareas.
-* Drag & Drop para mover tareas entre columnas.
-* Registro de horas trabajadas por fecha (timesheet).
-* Validación de fechas y mensajes modales.
-* Integración con **Firestore** para persistencia de datos.
+Incluye:
 
----
-
-## Requisitos
-
-* Node.js >= 18.x
-* npm >= 9.x o yarn >= 3.x
+- ✅ Registro e inicio de sesión con **Firebase Authentication** (sin verificación por email)  
+- 🗂️ Creación, edición y eliminación de tareas  
+- 🔄 Drag & Drop para mover tareas entre columnas  
+- ⏱️ Registro de horas trabajadas (timesheet)  
+- 🧮 Validación de fechas y mensajes modales dinámicos  
+- ☁️ Persistencia en **Firestore**  
 
 ---
 
-## Instalación
+## 🚀 Requisitos
 
-1. Clonar el repositorio oficial del equipo:
+- **Node.js** >= 18.x  
+- **npm** >= 9.x o **yarn** >= 3.x  
+
+---
+
+## ⚙️ Instalación
+
+1. Clonar el repositorio:
 
 ```bash
-git clone https://github.com/Nexeus-Big-Data-Labs/202509-sigma.git
-cd 202509-sigma
+git clone https://github.com/JMGS93/kanban-nexeus.git
+cd kanban-nexeus
 ```
 
 2. Instalar dependencias:
@@ -62,15 +65,27 @@ npm run dev
 ## Estructura principal del proyecto
 
 ```text
-KANBAN-NEXEUS/
-├─ public/
+kanban-nexeus/
 ├─ src/
-│  ├─ components/       # Componentes React (Column, formWrapper, KanbanBoard, Register, TaskCard)
-│  ├─ screens/          # Pantalla principal (Login)
-│  ├─ firestoreTasks.js # Funciones CRUD con Firestore
-│  ├─ App.jsx           # Componente principal
-│  └─ main.jsx          # Punto de entrada
-├─ .env                 # Configuración Firebase
+│  ├─ assets/                 # Imágenes y recursos estáticos
+│  ├─ components/             # Componentes reutilizables
+│  │  ├─ Column.jsx
+│  │  ├─ FormWrapper.jsx
+│  │  ├─ KanbanBoard.jsx
+│  │  ├─ Register.jsx
+│  │  └─ TaskCard.jsx
+│  ├─ screens/                # Pantallas principales
+│  │  └─ Login.jsx
+│  ├─ utils/                  # Utilidades y helpers
+│  │  └─ exportCSV.js
+│  ├─ App.css
+│  ├─ App.jsx
+│  ├─ firebase.js             # Configuración de Firebase
+│  ├─ firestoreTasks.js       # CRUD de tareas en Firestore
+│  ├─ index.css
+│  ├─ main.jsx
+│  └─ projects.js             # Gestión de proyectos
+├─ .env                       # Variables de entorno
 ├─ package.json
 ├─ vite.config.js
 └─ tailwind.config.cjs
@@ -78,17 +93,42 @@ KANBAN-NEXEUS/
 
 ---
 
-## Dependencias principales
+## 📦 Dependencias principales
 
-* React 18+
-* Vite
-* TailwindCSS
-* @hello-pangea/dnd (Drag & Drop)
-* Firebase (Firestore)
+Estas son las librerías clave utilizadas en **Kanban-Nexeus**:
+
+### 🔹 Core
+- **React 18+** – Librería principal para la UI  
+- **React DOM** – Renderizado en el navegador  
+- **React Router DOM** – Navegación entre pantallas  
+- **Vite** – Bundler ultrarrápido para desarrollo
+
+### 🔹 Estilos
+- **TailwindCSS 4+** – Framework CSS utilitario  
+- **autoprefixer** / **postcss** – Compatibilidad entre navegadores  
+
+### 🔹 Funcionalidad
+- **@hello-pangea/dnd** – Drag & Drop moderno y fluido  
+- **react-beautiful-dnd** – (Compatibilidad con versiones previas)  
+- **lucide-react** – Iconos SVG ligeros y personalizables  
+- **Firebase** – Autenticación y base de datos Firestore  
+
+### 🔹 Desarrollo
+- **ESLint** + **plugins React** – Reglas de estilo y linting  
+- **Globals** – Tipos y configuraciones auxiliares  
+- **Tailwind PostCSS Compat** – Soporte extendido para Tailwind  
 
 ---
+
 
 ## Notas importantes
 
 * Antes de ejecutar, asegúrate de tener el archivo `.env` con las credenciales proporcionadas.
 * El tablero se inicializa vacío si no hay tareas.
+
+```
+👥 Créditos
+
+Desarrollado por Nexeus Big Data Labs
+📦 Repositorio oficial: github.com/JMGS93/kanban-nexeus
+```
