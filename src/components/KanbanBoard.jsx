@@ -23,6 +23,7 @@ import { getAllTasks, saveTask, updateTask, removeTask } from "../firestoreTasks
 import TaskCard from "../components/TaskCard";
 import { exportCompletedTasksToCSV } from "../utils/exportCSV";
 import logo from "../assets/nexeus.png"; // Importa el logo
+import AppTour from "../components/AppTour";
 
 /**
  * parseDate()
@@ -81,6 +82,16 @@ function Message({ text, onClose, children }) {
     const [totalHours, setTotalHours] = useState(0);
     const [hoursModal, setHoursModal] = useState(null);
     const [warningModal, setWarningModal] = useState(null);
+    const [showWelcome, setShowWelcome] = useState(true);
+    const [runTour, setRunTour] = useState(false);
+
+    useEffect(() => {
+      const seen = localStorage.getItem("tutorialCompleted");
+      if (!seen) {
+        const timer = setTimeout(() => setRunTour(true), 800);
+        return () => clearTimeout(timer);
+      }
+    }, []);
 
     // ============================================================
     // 🔹 Cargar tareas del proyecto activo
@@ -413,13 +424,26 @@ function Message({ text, onClose, children }) {
         className="w-64 h-auto mb-4"
       />
 
-      {/* Línea de inputs */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-2 items-start">
-        <input type="text" className="border p-2 rounded w-48" placeholder="Nueva tarea..." value={newTask} onChange={(e) => setNewTask(e.target.value)} />
-        <input type="text" className="border p-2 rounded w-36" placeholder="Responsable..." value={newResponsible} onChange={(e) => setNewResponsible(e.target.value)} />
+    {/* Línea de inputs */}
+    <div className="flex flex-col sm:flex-row gap-2 mb-2 items-start">
+      <input
+        type="text"
+        className="border p-2 rounded w-48 input-proyecto"
+        placeholder="Nueva tarea..."
+        value={newTask}
+        onChange={(e) => setNewTask(e.target.value)}
+      />
+
+      <input
+        type="text"
+        className="border p-2 rounded w-36 input-responsable"
+        placeholder="Responsable..."
+        value={newResponsible}
+        onChange={(e) => setNewResponsible(e.target.value)}
+      />
 
       {/* Fecha creación */}
-      <div className="flex flex-col items-center gap-1 w-36">
+      <div className="flex flex-col items-center gap-1 w-36 input-fecha">
         <input
           type="date"
           className="border p-2 rounded w-full"
@@ -440,60 +464,69 @@ function Message({ text, onClose, children }) {
         <span className="text-xs italic text-center text-gray-500">Fecha límite</span>
       </div>
 
-        <select className="border p-2 rounded w-36" value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)}>
-          {Object.entries(columns).map(([id, col]) => (
-            <option key={id} value={id}>{col.name}</option>
-          ))}
-        </select>
+      <select
+        className="border p-2 rounded w-36"
+        value={targetColumn}
+        onChange={(e) => setTargetColumn(e.target.value)}
+      >
+        {Object.entries(columns).map(([id, col]) => (
+          <option key={id} value={id}>{col.name}</option>
+        ))}
+      </select>
 
-        <button className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600" onClick={addTask}>
-          Añadir
-        </button>
-      </div>
+      <button
+        className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600"
+        onClick={addTask}
+      >
+        Añadir
+      </button>
+    </div>
       
       {/* 🔹 Línea separadora */}
       <hr className="w-full border-gray-300 my-6" />
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-6 justify-center w-full flex-wrap mt-[30px]">
-          
+        <div className="flex gap-6 justify-center w-full flex-wrap mt-[30px] kanban-board">
+        
 
           
-          {/* Columnas del tablero */}
-          {Object.entries(columns).map(([columnId, column]) => (
-            <Droppable key={columnId} droppableId={columnId}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`bg-white rounded p-4 shadow w-64 transition-colors duration-200 ${
-                    snapshot.isDraggingOver ? "bg-blue-100" : "bg-gray-50"
-                  }`}
-                >
-                  <h3 className="text-lg font-semibold text-center mb-3">{column.name}</h3>
-                  {column.items.map((item, index) => (
-                    <TaskCard
-                      key={item.id}
-                      task={item}
-                      index={index}
-                      columnId={columnId}
-                      setConfirmDeleteTask={setConfirmDeleteTask}
-                      setHoursModal={setHoursModal}
-                    />
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-
+      {Object.entries(columns).map(([columnId, column]) => (
+        <Droppable key={columnId} droppableId={columnId}>
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`bg-white rounded p-4 shadow w-64 transition-colors duration-200 ${
+                snapshot.isDraggingOver ? "bg-blue-100" : "bg-gray-50"
+              } ${
+                columnId === "todo" ? "columna-todo" :
+                columnId === "inProgress" ? "columna-inprogress" :
+                columnId === "done" ? "columna-done" : ""
+              }`}
+            >
+              <h3 className="text-lg font-semibold text-center mb-3">{column.name}</h3>
+              {column.items.map((item, index) => (
+                <TaskCard
+                  key={item.id}
+                  task={item}
+                  index={index}
+                  columnId={columnId}
+                  setConfirmDeleteTask={setConfirmDeleteTask}
+                  setHoursModal={setHoursModal}
+                />
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      ))}
           
 
         {/* Columna de métricas */}
-          <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4 self-start">
+          <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4 self-start metricas-panel">
             {/* 🔹 Botón de exportar CSV */}
             <button
-              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600"
+              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600 btn-export"
               onClick={() => exportCompletedTasksToCSV(columns)}
             >
               Exportar CSV
@@ -568,6 +601,8 @@ function Message({ text, onClose, children }) {
       {warningModal && (
         <Message text={warningModal.text} onClose={warningModal.onClose || (() => setWarningModal(null))} />
       )}
+      {/* 🔹 Tutorial interactivo (tour guiado) */}
+      <AppTour run={runTour} setRun={setRunTour} />
     </div>
   );
 }

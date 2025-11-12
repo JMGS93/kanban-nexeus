@@ -61,6 +61,7 @@ function App() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [startTour, setStartTour] = useState(false);
 
   // =========================================================
   // Cargar usuario y proyectos
@@ -185,6 +186,8 @@ function App() {
 
     // Opcional: mostrar un mensaje de bienvenida
     setMessage("✅ Registro completado correctamente. ¡Bienvenido!\n\nPara empezar, crea un proyecto nuevo.");
+    setStartTour(true);
+
   };
 
   const handleLoginSuccess = (u) => {
@@ -323,57 +326,47 @@ function App() {
       ) : (
         <>
           {/* Menú lateral con proyecto activo */}
-          <div className="absolute bottom-4 left-4 z-50 w-60">
-            <div className="mb-2 p-2 bg-white border border-gray-300 shadow-md text-center">
-              <h3 className="text-sm text-gray-500">Proyecto activo:</h3>
-              <h2 className="text-lg font-semibold text-gray-900">
-                {activeProject ? activeProject.name : "Ninguno"}
-              </h2>
-            </div>
-
-            <div className="bg-white border border-gray-300 shadow-lg p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3 text-center border-b border-gray-300 pb-2">
-                Acciones
-              </h2>
-              <div className="flex flex-col gap-3">
-                <button
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                  onClick={() => setShowCreateModal(true)}
-                >
-                  <Plus size={18} /> Crear proyecto
-                </button>
-
-                <button
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                  onClick={() => setShowChangeModal(true)}
-                  disabled={projects.length === 0}
-                >
-                  <RefreshCcw size={18} /> Cambiar proyecto
-                </button>
-
-                <button
-                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                  onClick={handleLogout}
-                >
-                  <LogOut size={18} /> Cerrar sesión
-                </button>
-
-                <button
-                  className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                  onClick={handleDeleteAccount}
-                >
-                  <Trash2 size={18} /> Eliminar cuenta
-                </button>
-              </div>
+          <div className="fixed bottom-8 left-4 z-50 w-60 bg-white border border-gray-300 shadow-lg p-4 rounded menu-acciones">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3 text-center border-b border-gray-300 pb-2">
+              Acciones
+            </h2>
+            <div className="flex flex-col gap-3">
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <Plus size={18} /> Crear proyecto
+              </button>
+              <button
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                onClick={() => setShowChangeModal(true)}
+                disabled={projects.length === 0}
+              >
+                <RefreshCcw size={18} /> Cambiar proyecto
+              </button>
+              <button
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                onClick={handleLogout}
+              >
+                <LogOut size={18} /> Cerrar sesión
+              </button>
+              <button
+                className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                onClick={handleDeleteAccount}
+              >
+                <Trash2 size={18} /> Eliminar cuenta
+              </button>
             </div>
           </div>
 
           {/* 🔹 Tablero Kanban vinculado al proyecto activo */}
           <KanbanBoard
             uid={user.uid}
-            activeProject={activeProject}  
+            activeProject={activeProject}
             updateTasks={updateProjectTasks}
+            startTour={startTour}
           />
+          {startTour && setStartTour(false)} {/* Esto evita que se reinicie el tour */}
         </>
       )}
     </div>
