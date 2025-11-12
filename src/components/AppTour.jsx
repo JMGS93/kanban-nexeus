@@ -62,7 +62,7 @@ export default function AppTour({ run, setRun }) {
   return (
     <Joyride
       steps={steps}
-      run={true}
+      run={run}
       continuous
       scrollToFirstStep
       showSkipButton
