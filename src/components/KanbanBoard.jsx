@@ -490,7 +490,7 @@ function Message({ text, onClose, children }) {
           
 
         {/* Columna de métricas */}
-          <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4">
+          <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4 self-start">
             {/* 🔹 Botón de exportar CSV */}
             <button
               className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600"
