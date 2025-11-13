@@ -488,42 +488,42 @@ function Message({ text, onClose, children }) {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-6 justify-center w-full flex-wrap mt-[30px] kanban-board">
-        
-
           
-      {Object.entries(columns).map(([columnId, column]) => (
-        <Droppable key={columnId} droppableId={columnId}>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={`bg-white rounded p-4 shadow w-64 transition-colors duration-200 ${
-                snapshot.isDraggingOver ? "bg-blue-100" : "bg-gray-50"
-              } ${
-                columnId === "todo" ? "columna-todo" :
-                columnId === "inProgress" ? "columna-inprogress" :
-                columnId === "done" ? "columna-done" : ""
-              }`}
-            >
-              <h3 className="text-lg font-semibold text-center mb-3">{column.name}</h3>
-              {column.items.map((item, index) => (
-                <TaskCard
-                  key={item.id}
-                  task={item}
-                  index={index}
-                  columnId={columnId}
-                  setConfirmDeleteTask={setConfirmDeleteTask}
-                  setHoursModal={setHoursModal}
-                />
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      ))}
-          
+          {/* Contenedor solo para las columnas, usado por el tour */}
+          <div className="flex gap-6" data-tour-id="kanban-columnas">
+            {Object.entries(columns).map(([columnId, column]) => (
+              <Droppable key={columnId} droppableId={columnId}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`bg-white rounded p-4 shadow w-64 transition-colors duration-200 ${
+                      snapshot.isDraggingOver ? "bg-blue-100" : "bg-gray-50"
+                    } ${
+                      columnId === "todo" ? "columna-todo" :
+                      columnId === "inProgress" ? "columna-inprogress" :
+                      columnId === "done" ? "columna-done" : ""
+                    }`}
+                  >
+                    <h3 className="text-lg font-semibold text-center mb-3">{column.name}</h3>
+                    {column.items.map((item, index) => (
+                      <TaskCard
+                        key={item.id}
+                        task={item}
+                        index={index}
+                        columnId={columnId}
+                        setConfirmDeleteTask={setConfirmDeleteTask}
+                        setHoursModal={setHoursModal}
+                      />
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
 
-        {/* Columna de métricas */}
+          {/* Columna de métricas sigue igual, no se mueve */}
           <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4 self-start metricas-panel">
             {/* 🔹 Botón de exportar CSV */}
             <button

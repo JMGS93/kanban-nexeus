@@ -65,7 +65,7 @@ export default function AppTour({ run, setRun }) {
     { target: ".input-fecha", content: "Selecciona la fecha de inicio o planificación de tu tarea." },
     { target: ".input-fecha-limite", content: "Selecciona la fecha límite para completar la tarea." },
     { target: ".select-columna", content: "Selecciona en qué columna quieres que aparezca la tarea." },
-    { target: ".kanban-board", content: "Este es el tablero Kanban. Aquí puedes arrastrar y soltar tareas entre columnas." },
+    { target: "[data-tour-id='kanban-columnas']", content: "Este es el tablero Kanban. Aquí puedes arrastrar y soltar tareas entre columnas." },
     { target: ".columna-todo", content: "La columna 'Por hacer' contiene las tareas pendientes." },
     { target: ".columna-inprogress", content: "La columna 'En progreso' muestra las tareas que están siendo trabajadas actualmente." },
     { target: ".columna-done", content: "La columna 'Hecho' muestra las tareas completadas, junto con la fecha de finalización." },
