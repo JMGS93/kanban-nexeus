@@ -14,6 +14,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { LogOut, Trash2, Plus, RefreshCcw, BookOpen } from "lucide-react";
+import { deleteProject } from "./projectOperations";
 
 // =========================================================
 // COMPONENTE: Message (modal reutilizable)
@@ -63,6 +64,7 @@ function App() {
   const [newProjectName, setNewProjectName] = useState("");
   const [startTour, setStartTour] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [confirmDeleteProject, setConfirmDeleteProject] = useState(false);
 
   // =========================================================
   // Cargar usuario y proyectos
@@ -207,6 +209,38 @@ function App() {
 
   const handleLoginSuccess = (u) => {
     setUser(u);
+  };
+
+  // ---------------------------------------------------------
+  // Eliminar proyecto activo
+  // ---------------------------------------------------------
+  const deleteActiveProject = async () => {
+    if (!user || !activeProject || !activeProject.id) return;
+
+    try {
+      // Llamar a la función que elimina proyecto y tareas asociadas
+      await deleteProject(user.uid, activeProject.id);
+
+      // Actualizar lista de proyectos
+      const updatedProjects = projects.filter(p => p.id !== activeProject.id);
+      setProjects(updatedProjects);
+
+      // Establecer un nuevo proyecto activo si hay alguno
+      if (updatedProjects.length > 0) {
+        setActiveProject(updatedProjects[0]);
+        localStorage.setItem("activeProjectId", updatedProjects[0].id);
+      } else {
+        setActiveProject({ id: null, name: "Sin proyectos", tasks: [] });
+        localStorage.removeItem("activeProjectId");
+      }
+
+      setConfirmDeleteProject(false);
+      setMessage("Proyecto eliminado correctamente.");
+    } catch (err) {
+      console.error("Error al eliminar proyecto:", err);
+      setMessage("Error al eliminar proyecto: " + err.message);
+      setConfirmDeleteProject(false);
+    }
   };
 
   // =========================================================
@@ -358,6 +392,7 @@ function App() {
                 Acciones
               </h2>
               <div className="flex flex-col gap-3">
+                {/* Crear proyecto */}
                 <button
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                   onClick={() => setShowCreateModal(true)}
@@ -365,6 +400,7 @@ function App() {
                   <Plus size={18} /> Crear proyecto
                 </button>
 
+                {/* Cambiar proyecto */}
                 <button
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                   onClick={() => setShowChangeModal(true)}
@@ -373,6 +409,16 @@ function App() {
                   <RefreshCcw size={18} /> Cambiar proyecto
                 </button>
 
+                {/* Eliminar proyecto */}
+                <button
+                  className="bg-red-800 hover:bg-orange-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2 disabled:opacity-100 disabled:text-white disabled:cursor-not-allowed"
+                  onClick={() => setConfirmDeleteProject(true)}
+                  disabled={!activeProject || !activeProject.id}
+                >
+                  <Trash2 size={18} /> Eliminar proyecto
+                </button>
+
+                {/* Tutorial */}
                 <button
                   className="bg-yellow-500 hover:bg-yellow-500 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                   onClick={() => {
@@ -383,6 +429,7 @@ function App() {
                   <BookOpen size={18} /> Tutorial
                 </button>
 
+                {/* Cerrar sesión */}
                 <button
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                   onClick={handleLogout}
@@ -390,6 +437,7 @@ function App() {
                   <LogOut size={18} /> Cerrar sesión
                 </button>
 
+                {/* Eliminar cuenta */}
                 <button
                   className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                   onClick={handleDeleteAccount}
@@ -399,6 +447,29 @@ function App() {
               </div>
             </div>
           </div>
+
+          {/* Modal de confirmación para eliminar proyecto */}
+          {confirmDeleteProject && (
+            <Message
+              text={`¿Seguro que quieres eliminar el proyecto "${activeProject.name}"? Esta acción no se puede deshacer.`}
+              onClose={() => setConfirmDeleteProject(false)}
+            >
+              <div className="mt-4 flex justify-center gap-4">
+                <button
+                  className="bg-red-800 hover:bg-orange-600 text-white px-4 py-2 rounded shadow-md flex-1"
+                  onClick={deleteActiveProject}
+                >
+                  Sí, eliminar
+                </button>
+                <button
+                  className="bg-gray-800 hover:bg-gray-600 text-white px-4 py-2 rounded shadow-md flex-1"
+                  onClick={() => setConfirmDeleteProject(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </Message>
+          )}
 
           {/* Tablero Kanban vinculado al proyecto activo */}
           {activeProject ? (
