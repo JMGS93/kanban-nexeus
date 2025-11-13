@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import Joyride from "react-joyride";
 
 // Componente de tooltip personalizado
-const CustomTooltip = ({ step, index, isLastStep, backProps, closeProps, primaryProps }) => {
+const CustomTooltip = ({ step, index, isLastStep, backProps, closeProps, primaryProps, setRun }) => {
+  const handleClose = () => {
+    setRun(false); // Detiene el tutorial y oculta el beacon
+    if (closeProps && closeProps.onClick) closeProps.onClick();
+  };
+
   return (
     <div style={{
       padding: "16px",
@@ -15,7 +20,7 @@ const CustomTooltip = ({ step, index, isLastStep, backProps, closeProps, primary
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         {index > 0 && <button {...backProps} style={buttonStyle}>Atrás</button>}
         <div style={{ display: "flex", gap: "8px" }}>
-          <button {...closeProps} style={buttonStyleSecondary}>Cerrar</button>
+          <button onClick={handleClose} style={buttonStyleSecondary}>Cerrar</button>
           <button {...primaryProps} style={buttonStylePrimary}>
             {isLastStep ? "Finalizar" : "Siguiente"}
           </button>
@@ -96,7 +101,7 @@ export default function AppTour({ run, setRun }) {
           zIndex: 10000,
         },
       }}
-      tooltipComponent={CustomTooltip}
+      tooltipComponent={(props) => <CustomTooltip {...props} setRun={setRun} />}
       callback={handleJoyrideCallback}
     />
   );
