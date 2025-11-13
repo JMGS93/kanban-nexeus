@@ -523,9 +523,9 @@ function Message({ text, onClose, children }) {
             ))}
           </div>
 
-          {/* Columna de métricas sigue igual, no se mueve */}
+          {/* Columna de métricas */}
           <div className="bg-white rounded p-4 shadow w-64 flex flex-col gap-4 self-start metricas-panel">
-            {/* 🔹 Botón de exportar CSV */}
+            {/* Botón de exportar CSV */}
             <button
               className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-purple-600 btn-export"
               onClick={() => exportCompletedTasksToCSV(columns)}
@@ -533,18 +533,21 @@ function Message({ text, onClose, children }) {
               Exportar CSV
             </button>
 
-            {/* Total horas */}
-            <div className="bg-blue-50 p-3 rounded shadow">
-              <p className="font-semibold text-center mb-1">Total Horas Proyecto</p>
-              <p className="text-center text-lg">{totalHours.toFixed(2)}h</p>
-            </div>
+            {/* Contenedor de métricas usado por el tour */}
+            <div className="metricas-contenido flex flex-col gap-4">
+              {/* Total horas */}
+              <div className="bg-blue-50 p-3 rounded shadow">
+                <p className="font-semibold text-center mb-1">Total Horas Proyecto</p>
+                <p className="text-center text-lg">{totalHours.toFixed(2)}h</p>
+              </div>
 
-            {/* Horas por responsable */}
-            <div className="bg-green-50 p-3 rounded shadow">
-              <p className="font-semibold text-center mb-1">Horas por Responsable</p>
-              {Object.entries(getHoursByResponsible()).map(([name, hours]) => (
-                <p key={name} className="text-center">{name}: {hours}h</p>
-              ))}
+              {/* Horas por responsable */}
+              <div className="bg-green-50 p-3 rounded shadow">
+                <p className="font-semibold text-center mb-1">Horas por Responsable</p>
+                {Object.entries(getHoursByResponsible()).map(([name, hours]) => (
+                  <p key={name} className="text-center">{name}: {hours}h</p>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -70,7 +70,7 @@ export default function AppTour({ run, setRun }) {
     { target: ".columna-inprogress", content: "La columna 'En progreso' muestra las tareas que están siendo trabajadas actualmente." },
     { target: ".columna-done", content: "La columna 'Hecho' muestra las tareas completadas, junto con la fecha de finalización." },
     { target: ".btn-export", content: "Este botón exporta todas las tareas COMPLETADAS a un archivo CSV." },
-    { target: ".metricas-panel", content: "Aquí verás las métricas del proyecto: total de horas, responsables y tiempos acumulados." },
+    { target: ".metricas-contenido", content: "Aquí verás las métricas del proyecto: total de horas, responsables y tiempos acumulados." },
     { target: ".menu-acciones", content: "En este menú puedes crear o cambiar de proyecto, y acceder a otras funciones clave." },
   ]);
 
