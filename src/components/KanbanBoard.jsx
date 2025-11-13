@@ -432,6 +432,7 @@ function Message({ text, onClose, children }) {
         placeholder="Nueva tarea..."
         value={newTask}
         onChange={(e) => setNewTask(e.target.value)}
+        data-tour-id="input-nueva-tarea" // ⚡ agrega
       />
 
       <input
