@@ -10,11 +10,7 @@ Incluye:
 - ⏱️ Registro de horas trabajadas (timesheet)  
 - 🧮 Validación de fechas y mensajes modales dinámicos  
 - ☁️ Persistencia en **Firestore**  
-- 🌟 Tutorial Interactivo:
-   -Guía paso a paso para nuevos usuarios usando react-joyride.
-   -Botones completamente en español: “Siguiente”, “Atrás”, “Finalizar” y “Cerrar”.
-   -Al cerrar el tutorial, se elimina el indicador animado (beacon) de la pantalla.
-   -Permite navegar fácilmente por todos los elementos clave del tablero Kanban.
+- 🌟 Tutorial Interactivo
 
 ---
 
