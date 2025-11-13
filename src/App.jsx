@@ -13,7 +13,7 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { LogOut, Trash2, Plus, RefreshCcw } from "lucide-react";
+import { LogOut, Trash2, Plus, RefreshCcw, BookOpen } from "lucide-react";
 
 // =========================================================
 // COMPONENTE: Message (modal reutilizable)
@@ -62,12 +62,14 @@ function App() {
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [startTour, setStartTour] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // =========================================================
   // Cargar usuario y proyectos
   // =========================================================
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log("Auth state changed:", currentUser);
       if (currentUser) {
         setUser(currentUser);
         await loadProjects(currentUser.uid);
@@ -76,9 +78,18 @@ function App() {
         setProjects([]);
         setActiveProject(null);
       }
+      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (startTour) {
+      // Resetea startTour después de que el tour se active
+      setStartTour(false);
+    }
+  }, [startTour]);
+
   // ---------------------------------------------------------
   // Firestore: cargar proyectos del usuario
   // ---------------------------------------------------------
@@ -94,16 +105,20 @@ function App() {
 
       setProjects(loadedProjects);
 
-      // 🔹 Intentar recuperar el proyecto activo guardado
-      const savedProjectId = localStorage.getItem("activeProjectId");
-      const active = loadedProjects.find(p => p.id === savedProjectId) || loadedProjects[0];
-
-      if (active) setActiveProject(active);
+      // 🔹 Establecer proyecto activo o valor por defecto si no hay proyectos
+      if (loadedProjects.length === 0) {
+        setActiveProject({ id: null, name: "Sin proyectos", tasks: [] });
+      } else {
+        const savedProjectId = localStorage.getItem("activeProjectId");
+        const active = loadedProjects.find(p => p.id === savedProjectId) || loadedProjects[0];
+        setActiveProject(active);
+      }
 
     } catch (err) {
       console.error("Error al cargar proyectos:", err);
     }
   };
+
 
   // ---------------------------------------------------------
   // Crear un nuevo proyecto
@@ -224,6 +239,7 @@ function App() {
           </div>
         </Message>
       )}
+
       {confirmLogout && (
         <Message
           text="¿Seguro que quieres cerrar sesión?"
@@ -310,18 +326,17 @@ function App() {
         </div>
       )}
 
-      {/* 🔹 Pantallas autenticadas / no autenticadas */}
-      {!user ? (
+      {/* 🔹 Renderizado principal */}
+      {authLoading ? (
+        <p className="text-center mt-20">Cargando sesión...</p>
+      ) : !user ? (
         showRegister ? (
           <Register
             onRegisterSuccess={handleRegisterSuccess}
             onSwitch={() => setShowRegister(false)}
           />
         ) : (
-          <Login
-            onLoginSuccess={handleLoginSuccess}
-            onSwitch={() => setShowRegister(true)}
-          />
+          <Login onLogin={handleLoginSuccess} onSwitch={() => setShowRegister(true)} />
         )
       ) : (
         <>
@@ -337,6 +352,7 @@ function App() {
               >
                 <Plus size={18} /> Crear proyecto
               </button>
+
               <button
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                 onClick={() => setShowChangeModal(true)}
@@ -344,12 +360,24 @@ function App() {
               >
                 <RefreshCcw size={18} /> Cambiar proyecto
               </button>
+
+              <button
+                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                onClick={() => {
+                  localStorage.removeItem("tutorialCompleted");
+                  setStartTour(true);
+                }}
+              >
+                <BookOpen size={18} /> Tutorial
+              </button>
+
               <button
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                 onClick={handleLogout}
               >
                 <LogOut size={18} /> Cerrar sesión
               </button>
+
               <button
                 className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
                 onClick={handleDeleteAccount}
@@ -359,14 +387,17 @@ function App() {
             </div>
           </div>
 
-          {/* 🔹 Tablero Kanban vinculado al proyecto activo */}
-          <KanbanBoard
-            uid={user.uid}
-            activeProject={activeProject}
-            updateTasks={updateProjectTasks}
-            startTour={startTour}
-          />
-          {startTour && setStartTour(false)} {/* Esto evita que se reinicie el tour */}
+          {/* Tablero Kanban vinculado al proyecto activo */}
+          {activeProject ? (
+            <KanbanBoard
+              uid={user.uid}
+              activeProject={activeProject}
+              updateTasks={updateProjectTasks}
+              startTour={startTour}
+            />
+          ) : (
+            <p className="text-center mt-20">Cargando proyecto...</p>
+          )}
         </>
       )}
     </div>

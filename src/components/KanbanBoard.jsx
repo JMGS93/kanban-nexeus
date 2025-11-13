@@ -65,7 +65,7 @@ function Message({ text, onClose, children }) {
    * Componente principal del tablero Kanban
    * =======================================
    */
-  export default function KanbanBoard({ activeProject }) {
+  export default function KanbanBoard({ activeProject, startTour }) {
     const [columns, setColumns] = useState({
       todo: { name: "Por hacer", items: [] },
       inProgress: { name: "En progreso", items: [] },
@@ -84,14 +84,14 @@ function Message({ text, onClose, children }) {
     const [warningModal, setWarningModal] = useState(null);
     const [showWelcome, setShowWelcome] = useState(true);
     const [runTour, setRunTour] = useState(false);
+    const [tourKey, setTourKey] = useState(0);
 
     useEffect(() => {
-      const seen = localStorage.getItem("tutorialCompleted");
-      if (!seen) {
-        const timer = setTimeout(() => setRunTour(true), 800);
-        return () => clearTimeout(timer);
+      if (startTour) {
+        setTourKey((prev) => prev + 1); // fuerza remount de AppTour
+        setRunTour(true);
       }
-    }, []);
+    }, [startTour]);
 
     // ============================================================
     // 🔹 Cargar tareas del proyecto activo
@@ -454,7 +454,7 @@ function Message({ text, onClose, children }) {
       </div>
 
       {/* Fecha límite */}
-      <div className="flex flex-col items-center gap-1 w-36">
+      <div className="flex flex-col items-center gap-1 w-36 input-fecha-limite">
         <input
           type="date"
           className="border p-2 rounded w-full"
@@ -465,7 +465,7 @@ function Message({ text, onClose, children }) {
       </div>
 
       <select
-        className="border p-2 rounded w-36"
+        className="border p-2 rounded w-36 select-columna"
         value={targetColumn}
         onChange={(e) => setTargetColumn(e.target.value)}
       >
@@ -602,7 +602,7 @@ function Message({ text, onClose, children }) {
         <Message text={warningModal.text} onClose={warningModal.onClose || (() => setWarningModal(null))} />
       )}
       {/* 🔹 Tutorial interactivo (tour guiado) */}
-      <AppTour run={runTour} setRun={setRunTour} />
+      <AppTour key={tourKey} run={runTour} setRun={setRunTour} />
     </div>
   );
 }

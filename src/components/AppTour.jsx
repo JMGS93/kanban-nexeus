@@ -15,6 +15,15 @@ export default function AppTour({ run, setRun }) {
     {
       target: ".input-fecha",
       content: "Selecciona la fecha de inicio o planificación de tu tarea.",
+      
+    },
+    {
+      target: ".input-fecha-limite",
+      content: "Selecciona la fecha límite para completar la tarea.",
+    },
+    {
+      target: ".select-columna",
+      content: "Selecciona en qué columna quieres que aparezca la tarea.",
     },
     {
       target: ".kanban-board",

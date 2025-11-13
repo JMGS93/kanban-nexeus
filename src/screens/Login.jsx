@@ -29,9 +29,8 @@ export default function Login({ onLogin = () => {}, onSwitch = () => {} }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      await user.reload();
 
-      const userDoc = await getDoc(doc(db, "sigma", user.uid));
+      const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists()) {
         setError("⚠️ Tu cuenta existe pero no está registrada en la base de datos del proyecto.");
         await auth.signOut();
