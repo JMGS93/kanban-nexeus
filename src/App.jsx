@@ -340,50 +340,63 @@ function App() {
         )
       ) : (
         <>
-          {/* Menú lateral con proyecto activo */}
-          <div className="fixed bottom-8 left-4 z-50 w-60 bg-white border border-gray-300 shadow-lg p-4 rounded menu-acciones">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3 text-center border-b border-gray-300 pb-2">
-              Acciones
-            </h2>
-            <div className="flex flex-col gap-3">
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus size={18} /> Crear proyecto
-              </button>
+          {/* Contenedor fijo para proyecto activo + menú de acciones */}
+          <div className="fixed left-4 bottom-8 z-50 flex flex-col items-center gap-4">
+            {/* Recuadro proyecto activo */}
+            {activeProject && (
+              <div className="w-60 bg-white border border-gray-300 shadow-lg p-4 rounded text-center">
+                <h3 className="text-gray-500 text-sm border-b border-gray-300 pb-2">
+                  Proyecto activo
+                </h3>
+                <p className="text-lg font-semibold text-gray-900 mt-2">{activeProject.name}</p>
+              </div>
+            )}
 
-              <button
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                onClick={() => setShowChangeModal(true)}
-                disabled={projects.length === 0}
-              >
-                <RefreshCcw size={18} /> Cambiar proyecto
-              </button>
+            {/* Menú de acciones */}
+            <div className="w-60 bg-white border border-gray-300 shadow-lg p-4 rounded menu-acciones">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3 text-center border-b border-gray-300 pb-2">
+                Acciones
+              </h2>
+              <div className="flex flex-col gap-3">
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  <Plus size={18} /> Crear proyecto
+                </button>
 
-              <button
-                className="bg-yellow-500 hover:bg-yellow-500 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                onClick={() => {
-                  localStorage.removeItem("tutorialCompleted");
-                  setStartTour(true);
-                }}
-              >
-                <BookOpen size={18} /> Tutorial
-              </button>
+                <button
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                  onClick={() => setShowChangeModal(true)}
+                  disabled={projects.length === 0}
+                >
+                  <RefreshCcw size={18} /> Cambiar proyecto
+                </button>
 
-              <button
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                onClick={handleLogout}
-              >
-                <LogOut size={18} /> Cerrar sesión
-              </button>
+                <button
+                  className="bg-yellow-500 hover:bg-yellow-500 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                  onClick={() => {
+                    localStorage.removeItem("tutorialCompleted");
+                    setStartTour(true);
+                  }}
+                >
+                  <BookOpen size={18} /> Tutorial
+                </button>
 
-              <button
-                className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
-                onClick={handleDeleteAccount}
-              >
-                <Trash2 size={18} /> Eliminar cuenta
-              </button>
+                <button
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={18} /> Cerrar sesión
+                </button>
+
+                <button
+                  className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded shadow-md flex items-center justify-center gap-2"
+                  onClick={handleDeleteAccount}
+                >
+                  <Trash2 size={18} /> Eliminar cuenta
+                </button>
+              </div>
             </div>
           </div>
 
