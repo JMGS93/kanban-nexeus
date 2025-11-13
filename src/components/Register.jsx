@@ -37,7 +37,7 @@ export default function Register({ onRegisterSuccess = () => {}, onSwitch = () =
         createdAt: new Date().toISOString(),
       });
 
-      onRegisterSuccess(user);
+      onRegisterSuccess(user, { runTour: true });
     } catch (err) {
       console.error("Error en registro:", err);
       switch (err.code) {
